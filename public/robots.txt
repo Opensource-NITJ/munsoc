@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://munsoc.opensourcenitj.com
+
+# Sitemaps
+Sitemap: https://munsoc.opensourcenitj.com/sitemap.xml
