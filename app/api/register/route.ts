@@ -36,6 +36,37 @@ function recordSubmission(ip: string, body: Record<string, string>) {
   rateLimitSubmissionLog.set(ip, nextLog);
 }
 
+const SAFE_HEADERS = new Set([
+  "accept",
+  "accept-encoding",
+  "accept-language",
+  "connection",
+  "content-length",
+  "content-type",
+  "host",
+  "origin",
+  "referer",
+  "sec-ch-ua",
+  "sec-ch-ua-mobile",
+  "sec-ch-ua-platform",
+  "sec-fetch-dest",
+  "sec-fetch-mode",
+  "sec-fetch-site",
+  "user-agent",
+  "x-forwarded-for",
+  "x-real-ip"
+]);
+
+function escapeHtml(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 async function sendRateLimitAlert(
   ip: string,
   headers: Record<string, string>,
@@ -50,29 +81,29 @@ async function sendRateLimitAlert(
       .map((s, i) => `
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding: 8px; font-weight: bold; color: #64748b; vertical-align: top; white-space: nowrap;">#${i + 1}</td>
-          <td style="padding: 8px; font-family: monospace; font-size: 11px; color: #64748b; vertical-align: top;">${s.timestamp}</td>
+          <td style="padding: 8px; font-family: monospace; font-size: 11px; color: #64748b; vertical-align: top;">${escapeHtml(s.timestamp)}</td>
           <td style="padding: 8px; font-size: 12px;">
-            <b>Name:</b> ${s.body.name || "—"}<br/>
-            <b>Email:</b> ${s.body.email || "—"}<br/>
-            <b>WhatsApp:</b> ${s.body.whatsapp || "—"}<br/>
-            <b>Pref1:</b> ${s.body.pref1 || "—"}<br/>
-            <b>TxnID:</b> <span style="font-family:monospace">${s.body.transactionId || "—"}</span>
+            <b>Name:</b> ${escapeHtml(s.body.name || "—")}<br/>
+            <b>Email:</b> ${escapeHtml(s.body.email || "—")}<br/>
+            <b>WhatsApp:</b> ${escapeHtml(s.body.whatsapp || "—")}<br/>
+            <b>Pref1:</b> ${escapeHtml(s.body.pref1 || "—")}<br/>
+            <b>TxnID:</b> <span style="font-family:monospace">${escapeHtml(s.body.transactionId || "—")}</span>
           </td>
         </tr>`
       ).join("");
 
     const headersHtml = Object.entries(headers)
-      .map(([k, v]) => `<tr><td style="padding: 6px 8px; font-weight:600; color:#64748b; font-size:11px; white-space:nowrap;">${k}</td><td style="padding: 6px 8px; font-family:monospace; font-size:11px; word-break:break-all;">${v}</td></tr>`)
+      .map(([k, v]) => `<tr><td style="padding: 6px 8px; font-weight:600; color:#64748b; font-size:11px; white-space:nowrap;">${escapeHtml(k)}</td><td style="padding: 6px 8px; font-family:monospace; font-size:11px; word-break:break-all;">${escapeHtml(v)}</td></tr>`)
       .join("");
 
     await resend.emails.send({
       from: FROM_EMAIL,
       to: ["nitjmunsoc@gmail.com"],
-      subject: `⚠️ AIPPM Rate Limit Hit — IP: ${ip}`,
+      subject: `⚠️ AIPPM Rate Limit Hit — IP: ${escapeHtml(ip)}`,
       html: `
         <div style="font-family: sans-serif; max-width: 700px; color: #1e293b;">
           <h2 style="color: #dc2626; border-bottom: 2px solid #fecaca; padding-bottom: 8px;">⚠️ Rate Limit Alert</h2>
-          <p>A user from IP <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">${ip}</code> has exceeded the maximum of <strong>${MAX_SUBMISSIONS} submissions per hour</strong> and was blocked.</p>
+          <p>A user from IP <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">${escapeHtml(ip)}</code> has exceeded the maximum of <strong>${MAX_SUBMISSIONS} submissions per hour</strong> and was blocked.</p>
 
           <h3 style="color: #0284c7; margin-top: 24px;">Submission History</h3>
           <table style="border-collapse: collapse; width: 100%; font-size: 13px; border: 1px solid #e2e8f0;">
@@ -108,13 +139,31 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "127.0.0.1";
 
     if (isRateLimited(ip)) {
-      // Collect all request headers for the alert
+      // Collect request headers (using allowlist & redaction)
       const headerMap: Record<string, string> = {};
-      req.headers.forEach((value, key) => { headerMap[key] = value; });
+      req.headers.forEach((value, key) => {
+        const lowerKey = key.toLowerCase();
+        if (SAFE_HEADERS.has(lowerKey)) {
+          headerMap[key] = value;
+        } else {
+          headerMap[key] = "[REDACTED]";
+        }
+      });
 
-      // Parse body to include in the alert (best-effort)
+      // Parse body to include in the alert (best-effort, size-capped to prevent DoS)
       let blockedBody: Record<string, string> = {};
-      try { blockedBody = await req.json(); } catch { /* ignore parse errors */ }
+      const contentLengthHeader = req.headers.get("content-length");
+      const contentLength = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+
+      if (contentLength > 0 && contentLength < 10240) {
+        try {
+          blockedBody = await req.json();
+        } catch {
+          /* ignore parse errors */
+        }
+      } else {
+        blockedBody = { _status: "[BODY_OMITTED_OR_TOO_LARGE]" };
+      }
 
       // Fire-and-forget alert to nitjmunsoc@gmail.com
       sendRateLimitAlert(ip, headerMap, blockedBody);
@@ -122,6 +171,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Rate limit exceeded. Maximum 3 submissions per hour allowed." },
         { status: 429 }
+      );
+    }
+
+    // Size check for general registration body to prevent DoS
+    const mainContentLengthHeader = req.headers.get("content-length");
+    const mainContentLength = mainContentLengthHeader ? parseInt(mainContentLengthHeader, 10) : 0;
+    if (mainContentLength > 10240) {
+      return NextResponse.json(
+        { success: false, error: "Payload too large." },
+        { status: 413 }
       );
     }
 
@@ -138,7 +197,7 @@ export async function POST(req: NextRequest) {
         if (checkResult.result === "success" && checkResult.allotted && checkResult.allotted.length >= 88) {
           return NextResponse.json(
             { success: false, error: "Registrations are closed because all delegate portfolios have been allotted." },
-            { status: 423 }
+            { status: 403 }
           );
         }
       } catch (checkErr) {
