@@ -30,3 +30,6 @@ yarn-error.log*
 next-env.d.ts
 
 public/sitemap.xml
+.script.gs
+.script.backup.gs
+.mail-script.gs
