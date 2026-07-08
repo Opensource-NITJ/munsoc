@@ -911,6 +911,25 @@ export default function AippmClient() {
                 </div>
               </div>
             </motion.div>
+          ) : allottedPortfolios.length >= memberList.length ? (
+            <motion.div
+              key="registrations-closed"
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="max-w-xl mx-auto bg-[#1c1c1e] border border-[#38bdf8]/20 rounded-2xl p-8 text-center shadow-lg shadow-[#38bdf8]/5 mt-6"
+            >
+              <div className="w-16 h-16 bg-[#38bdf8]/10 rounded-full flex items-center justify-center mx-auto mb-6 text-[#38bdf8]">
+                <Lock size={30} />
+              </div>
+              <h3 className="font-heading font-bold text-white text-xl mb-3 uppercase tracking-wide">
+                Registrations Closed
+              </h3>
+              <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                Thank you for your interest! All delegate portfolios for the All India Political Parties Meet (AIPPM) have been allotted, and registrations are now officially closed.
+              </p>
+            </motion.div>
           ) : (
             <motion.div
               key="form-grid"
