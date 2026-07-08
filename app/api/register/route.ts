@@ -243,7 +243,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { name, email, whatsapp, institute, pref1, pref2, pref3, experience, transactionId } = body;
+    const { name, email, whatsapp, institute, pref1, pref2, pref3, experience, transactionId: transactionIdRaw } = body;
+    const transactionId = typeof transactionIdRaw === "string" ? transactionIdRaw : "";
+    recordSubmission(ip, { name: String(name ?? ""), email: String(email ?? ""), whatsapp: String(whatsapp ?? ""), pref1: String(pref1 ?? ""), pref2: String(pref2 ?? ""), pref3: String(pref3 ?? ""), transactionId });
 
     if (GOOGLE_SHEET_WEBHOOK_URL) {
       try {
