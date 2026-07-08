@@ -9,13 +9,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "No image data provided" }, { status: 400 });
     }
 
-    // Generate a highly professional internal Reference ID
     const randomPart = randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
     const refId = `MUNSOC-REF-${randomPart}`;
 
-    // Temporarily cache the base64 image string in server memory
-    // It will be uploaded to ImgBB only when the application is submitted
     uploadRefMap.set(refId, image);
+
+    setTimeout(() => {
+      if (uploadRefMap.has(refId)) {
+        uploadRefMap.delete(refId);
+        console.log(`[MUNSoC Upload] Automatically cleaned up expired reference: ${refId}`);
+      }
+    }, 15 * 60 * 1000);
 
     return NextResponse.json({
       success: true,

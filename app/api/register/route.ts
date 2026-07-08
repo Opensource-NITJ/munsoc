@@ -2,35 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { uploadRefMap } from "../shared";
 
-// CONFIGURATION: Set environment variables or defaults
 const GOOGLE_SHEET_WEBHOOK_URL = process.env.GOOGLE_SHEET_WEBHOOK_URL || "";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const NOTIFICATION_EMAILS = process.env.NOTIFICATION_EMAILS || "";
 const FROM_EMAIL = process.env.FROM_EMAIL || "onboarding@resend.dev";
 const IMGBB_API_KEY = process.env.IMGBB_API_KEY || "";
 
-// In-memory rate limiting store: client IP -> timestamps[]
 const rateLimitStore = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000;
 const MAX_SUBMISSIONS = 3;
 
-/**
- * Checks if a given IP has exceeded the limit of 3 submissions in the last hour
- */
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
   const timestamps = rateLimitStore.get(ip) || [];
-  
-  // Keep only timestamps within the 1-hour window
   const activeTimestamps = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW);
   rateLimitStore.set(ip, activeTimestamps);
-  
   return activeTimestamps.length >= MAX_SUBMISSIONS;
 }
 
-/**
- * Logs a new submission timestamp for a given IP
- */
 function recordSubmission(ip: string) {
   const now = Date.now();
   const timestamps = rateLimitStore.get(ip) || [];
@@ -40,10 +29,8 @@ function recordSubmission(ip: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Resolve client IP address
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "127.0.0.1";
 
-    // Enforce rate limit
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { success: false, error: "Rate limit exceeded. Maximum 3 submissions per hour allowed." },
@@ -54,7 +41,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, whatsapp, institute, pref1, pref2, pref3, experience, transactionId } = body;
 
-    // Validate required fields
     if (!name || !email || !whatsapp || !pref1 || !pref2 || !pref3 || !transactionId) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
@@ -62,10 +48,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Late upload screenshot to ImgBB if it is a reference ID
     let resolvedTransactionId = transactionId;
     if (transactionId.startsWith("MUNSOC-REF-")) {
       const base64Image = uploadRefMap.get(transactionId);
+      if (!base64Image) {
+        return NextResponse.json(
+          { success: false, error: "Upload session expired. Please re-upload your payment receipt." },
+          { status: 400 }
+        );
+      }
+      uploadRefMap.delete(transactionId);
+
       if (base64Image && IMGBB_API_KEY) {
         try {
           const bodyParams = new URLSearchParams();
@@ -93,18 +86,13 @@ export async function POST(req: NextRequest) {
 
     if (!GOOGLE_SHEET_WEBHOOK_URL) {
       console.warn("[MUNSoC Register] Warning: GOOGLE_SHEET_WEBHOOK_URL is not set.");
-      // If not configured, we simulate a successful submission for frontend preview
-      recordSubmission(ip); // Log submission
-      if (transactionId.startsWith("MUNSOC-REF-")) {
-        uploadRefMap.delete(transactionId); // Clean up memory mapping
-      }
+      recordSubmission(ip);
       return NextResponse.json({
         success: true,
         message: "Demo mode: Registration received. (Please set GOOGLE_SHEET_WEBHOOK_URL in .env.local for Sheets sync)",
       });
     }
 
-    // Forward the data to Google Apps Script Web App
     const response = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -119,7 +107,7 @@ export async function POST(req: NextRequest) {
         pref2,
         pref3,
         experience: experience || "",
-        transactionId: resolvedTransactionId, // Write the resolved ImgBB URL to the sheet
+        transactionId: resolvedTransactionId,
         timestamp: new Date().toISOString(),
       }),
     });
@@ -127,15 +115,8 @@ export async function POST(req: NextRequest) {
     const result = await response.json();
 
     if (result.result === "success") {
-      // Record this submission in the rate limiter
       recordSubmission(ip);
 
-      // Clean up reference mapping from memory
-      if (transactionId.startsWith("MUNSOC-REF-")) {
-        uploadRefMap.delete(transactionId);
-      }
-
-      // Dispatch Resend email notification if configured
       if (RESEND_API_KEY && NOTIFICATION_EMAILS) {
         try {
           const resend = new Resend(RESEND_API_KEY);
@@ -233,13 +214,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    // Resolve client IP address
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "127.0.0.1";
     const rateLimited = isRateLimited(ip);
 
     if (!GOOGLE_SHEET_WEBHOOK_URL) {
       console.warn("[MUNSoC Register] Warning: GOOGLE_SHEET_WEBHOOK_URL is not set.");
-      // Return empty array and rate limit status
       return NextResponse.json({ success: true, allotted: [], rateLimited });
     }
 
