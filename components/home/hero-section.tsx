@@ -74,7 +74,7 @@ export default function HeroSection() {
           } as React.CSSProperties}
         >
           <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full animate-ping" />
-          ONLINE MUN (AIPPM) IS NOW LIVE &rarr;
+          ONLINE MUN (AIPPM): 16 JULY 9AM &rarr;
         </Link>
 
         <h1

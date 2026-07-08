@@ -72,9 +72,9 @@ export default function CommitteesSection() {
                       <span className="text-[#38bdf8] text-[9px] font-heading font-semibold tracking-widest uppercase">
                         {c.organizer}
                       </span>
-                      <span className="text-white/40 text-[9px] font-heading font-medium tracking-wider flex items-center gap-1 uppercase">
+                      <span className="text-white/40 text-[9px] font-heading font-medium tracking-wider flex items-center gap-1.5 uppercase">
                         <MapPin size={8} className="text-[#38bdf8]" />
-                        Online
+                        Online &bull; 16 July 2026, 9:00 AM
                       </span>
                     </div>
                     <span className="bg-[#38bdf8]/15 text-[#38bdf8] text-[9px] font-heading font-semibold tracking-widest px-2 py-0.5 rounded border border-[#38bdf8]/20">

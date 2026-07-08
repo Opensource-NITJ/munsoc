@@ -19,7 +19,7 @@ export default function HomePage() {
                 <p className="text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] flex items-center gap-3 px-12">
                   <span className="w-1 h-1 bg-[#38bdf8] rounded-full shadow-[0_0_8px_#38bdf8]" />
                   <a href="/committees/aippm" className="hover:text-white transition-colors uppercase">
-                    ONLINE MUN (AIPPM) IS NOW LIVE
+                    ONLINE MUN (AIPPM) ON 16 JULY 9AM
                   </a>
                 </p>
                 <div className="h-3 w-[1px] bg-[#38bdf8]/20" />

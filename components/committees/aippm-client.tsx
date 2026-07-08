@@ -15,6 +15,7 @@ import {
   Lock,
   HelpCircle,
   Trash2,
+  Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import QRCode from "qrcode";
@@ -737,8 +738,23 @@ export default function AippmClient() {
 
             {/* Logistics details list with rounded icon badges */}
             <div className="bg-[#1c1c1e] border border-white/5 rounded-xl p-6 flex flex-col gap-4">
-              {/* Timings */}
+              {/* Committee Date */}
               <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-[#38bdf8]/10 rounded-full flex items-center justify-center shrink-0 text-[#38bdf8]">
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <span className="text-[10px] text-white/40 block font-heading tracking-wider uppercase">
+                    Committee Date &amp; Time
+                  </span>
+                  <span className="text-white text-sm font-semibold">
+                    16 July 2026, 9:00 AM
+                  </span>
+                </div>
+              </div>
+
+              {/* Timings */}
+              <div className="flex items-center gap-4 border-t border-white/5 pt-4">
                 <div className="w-10 h-10 bg-[#38bdf8]/10 rounded-full flex items-center justify-center shrink-0 text-[#38bdf8]">
                   <Clock size={18} />
                 </div>

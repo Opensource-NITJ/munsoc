@@ -31,7 +31,7 @@ export default function AippmPage() {
         </div>
         <Reveal className="relative z-10 max-w-3xl mx-auto text-center">
           <div className="inline-block border border-[#38bdf8]/30 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1 rounded-sm mb-5 uppercase">
-            ONLINE MUN COMMITTEE
+            ONLINE MUN COMMITTEE &bull; 16 JULY 9AM
           </div>
           <h1
             className="font-display text-white text-balance uppercase"
