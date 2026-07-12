@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const config = {
-  matcher:
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)",
+  matcher: "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)",
 };
 
 export function proxy(req: NextRequest) {
@@ -10,6 +9,12 @@ export function proxy(req: NextRequest) {
   const ref = searchParams.get("ref");
 
   if (ref) {
+    const webhookUrl = process.env.REF_TRACKING_WEBHOOK_URL;
+    if (!webhookUrl) {
+      console.warn("[MUNSoC Proxy] REF_TRACKING_WEBHOOK_URL is not set, skipping tracking.");
+      return NextResponse.next();
+    }
+
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
@@ -28,8 +33,8 @@ export function proxy(req: NextRequest) {
       region: req.headers.get("x-vercel-ip-country-region") || "",
     };
 
-    const trackingUrl = new URL("/api/track", req.nextUrl.origin);
-    fetch(trackingUrl.toString(), {
+    // Call Google Sheets webhook directly — avoids internal localhost SSL issues
+    fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
