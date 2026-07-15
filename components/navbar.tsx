@@ -11,7 +11,7 @@ const navLinks = [
   { href: '/', label: 'HOME' },
   { href: '/about', label: 'ABOUT US' },
   { href: '/committees', label: 'COMMITTEES' },
-  { href: '/contact', label: 'CONTACT' },
+  { href: '/contact', label: 'CONTACT US' },
 ]
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -67,12 +67,6 @@ export default function Navbar() {
                   }`}
                 >
                   {link.label}
-                  {link.label === 'COMMITTEES' && (
-                    <span className="absolute -top-1 -right-2 flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#38bdf8] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#38bdf8]"></span>
-                    </span>
-                  )}
                   {isActive && (
                     <motion.span
                       layoutId="nav-underline"
@@ -88,10 +82,10 @@ export default function Navbar() {
           <div className="hidden md:flex items-center">
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.2 }}>
               <Link
-                href="/committees"
-                className="border border-[#38bdf8]/45 text-white text-xs font-heading font-semibold tracking-widest px-4 py-1.5 rounded hover:border-[#38bdf8] hover:text-[#38bdf8] hover:bg-[#38bdf8]/5 transition-colors duration-200"
+                href="/contact"
+                className="border border-white/30 text-white text-xs font-heading font-semibold tracking-widest px-4 py-1.5 rounded hover:border-[#38bdf8] hover:text-[#38bdf8] hover:bg-[#38bdf8]/5 transition-colors duration-200"
               >
-                PARTICIPATE NOW
+                CONTACT US
               </Link>
             </motion.div>
           </div>
@@ -128,27 +122,21 @@ export default function Navbar() {
                     <Link
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`text-sm font-heading font-semibold tracking-widest flex items-center gap-1.5 ${
+                      className={`text-sm font-heading font-semibold tracking-widest ${
                         isActive ? 'text-[#38bdf8]' : 'text-white/70'
                       }`}
                     >
                       {link.label}
-                      {link.label === 'COMMITTEES' && (
-                        <span className="flex h-1.5 w-1.5 relative">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#38bdf8] opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#38bdf8]"></span>
-                        </span>
-                      )}
                     </Link>
                   </motion.div>
                 )
               })}
               <Link
-                href="/committees"
+                href="/contact"
                 onClick={() => setMobileOpen(false)}
-                className="border border-[#38bdf8]/45 text-white text-xs font-heading font-semibold tracking-widest px-4 py-2 rounded text-center hover:border-[#38bdf8] hover:text-[#38bdf8] transition-colors"
+                className="border border-white/30 text-white text-xs font-heading font-semibold tracking-widest px-4 py-2 rounded text-center hover:border-[#38bdf8] hover:text-[#38bdf8] transition-colors"
               >
-                PARTICIPATE NOW
+                CONTACT US
               </Link>
             </div>
           </motion.div>

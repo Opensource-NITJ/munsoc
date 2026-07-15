@@ -40,9 +40,8 @@ const LinkedInIcon = () => (
 
 const footerLinks = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About Us" },
-  { href: "/committees", label: "Committees" },
-  { href: "/contact", label: "Contact Us" },
+  { href: "/join", label: "Join Us" },
+  { href: "/join#contact", label: "Contact Info" },
   {
     href: "https://instagram.com/nitjmunsociety",
     label: "Instagram",

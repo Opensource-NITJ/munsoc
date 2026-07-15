@@ -60,7 +60,6 @@ MUNSoC - Model United Nations Society
 Dr. B.R. Ambedkar National Institute of Technology Jalandhar
 Student Activity Cabin, NIT Jalandhar, Punjab - 144008
 
-Email: nitjmunsoc@gmail.com
 Instagram: @nitjmunsociety`,
   },
 ];

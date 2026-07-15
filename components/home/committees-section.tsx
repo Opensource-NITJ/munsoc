@@ -9,20 +9,17 @@ import {
   Lock,
   ArrowRight,
   MessageCircle,
-  MapPin,
 } from "lucide-react";
 import { Reveal, Stagger, StaggerItem, CountUp } from "@/components/motion";
 import { motion } from "motion/react";
 
 const committees = [
-  {
-    code: "AIPPM",
-    name: "All India Political Parties Meet (AIPPM)",
-    organizer: "MUNSoC NITJ",
-    desc: "All India Political Parties Meet, simulating Indian political debates and policy negotiations on crucial national topics.",
-    href: "/committees/aippm",
-  },
+  { code: "TBA", name: "To Be Announced" },
+  { code: "TBA", name: "To Be Announced" },
 ];
+
+const desc =
+  "Details of this committee will be revealed soon. Stay tuned for the agenda and guidebook.";
 
 const stats = [
   { icon: CalendarDays, value: 2, suffix: "+", label: "YEARS OF LEGACY" },
@@ -40,7 +37,7 @@ export default function CommitteesSection() {
         
         <Reveal className="text-center mb-14">
           <div className="inline-block border border-[#38bdf8]/30 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1 rounded-sm mb-4">
-            COMMITTEES ACTIVE
+            ANNOUNCING COMMITTEES SOON
           </div>
           <h2
             className="font-display text-white"
@@ -58,41 +55,50 @@ export default function CommitteesSection() {
           </p>
         </Reveal>
 
-        <div className="max-w-xl mx-auto mb-16">
-          <Stagger className="grid grid-cols-1 gap-5">
-            {committees.map((c) => (
-              <StaggerItem
-                key={c.code}
-                className="bg-gradient-to-br from-[#1c1c1e] to-[#121c26]/50 border border-[#38bdf8]/25 rounded-xl p-6 relative overflow-hidden group transition-all duration-300 hover:border-[#38bdf8]/50 hover:shadow-lg hover:shadow-[#38bdf8]/10 flex flex-col justify-between min-h-[220px] shadow-sm shadow-[#38bdf8]/5"
-              >
-                <Link href={c.href} className="absolute inset-0 z-10" aria-label={`View ${c.name}`} />
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[#38bdf8] text-[9px] font-heading font-semibold tracking-widest uppercase">
-                        {c.organizer}
-                      </span>
-                      <span className="text-white/40 text-[9px] font-heading font-medium tracking-wider flex items-center gap-1.5 uppercase">
-                        <MapPin size={8} className="text-[#38bdf8]" />
-                        Online &bull; 16 July 2026, 9:00 AM
-                      </span>
-                    </div>
-                    <span className="bg-[#38bdf8]/15 text-[#38bdf8] text-[9px] font-heading font-semibold tracking-widest px-2 py-0.5 rounded border border-[#38bdf8]/20">
-                      {c.code}
-                    </span>
-                  </div>
-                  <h3 className="font-heading font-semibold text-white text-base mb-2 pr-12 tracking-wide transition-colors group-hover:text-[#38bdf8]">
-                    {c.name}
-                  </h3>
-                  <p className="text-white/60 text-xs leading-relaxed mb-4">{c.desc}</p>
-                </div>
-                <span className="text-[#38bdf8]/80 text-xs font-heading font-medium tracking-widest group-hover:text-[#38bdf8] transition-colors flex items-center gap-1 mt-auto">
-                  EXPLORE COMMITTEE <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
-                </span>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-16">
+          {committees.map((c, i) => (
+            <StaggerItem
+              key={i}
+              className="bg-[#1c1c1e] border border-white/8 rounded-xl p-6 relative overflow-hidden group transition-colors duration-300 hover:border-[#38bdf8]/30"
+            >
+              
+              <div className="absolute inset-0 backdrop-blur-[2px] bg-[#1c1c1e]/60 flex flex-col items-center justify-center gap-2 rounded-xl z-10 transition-all duration-300 group-hover:backdrop-blur-[3px]">
+                <motion.div
+                  whileHover={{ scale: 1.06 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                  className="flex items-center gap-1.5 border border-[#38bdf8]/30 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1 rounded-sm"
+                >
+                  <Lock size={11} strokeWidth={2} />
+                  COMING SOON
+                </motion.div>
+                <p className="text-white/60 text-xs font-heading tracking-widest">
+                  DETAILS TO BE REVEALED
+                </p>
+                <Link
+                  href="/committees"
+                  className="mt-1 text-[#38bdf8]/60 text-[10px] font-heading tracking-widest hover:text-[#38bdf8] transition-colors flex items-center gap-1 group/link"
+                >
+                  VIEW ALL COMMITTEES
+                  <ArrowRight
+                    size={11}
+                    className="transition-transform duration-300 group-hover/link:translate-x-1"
+                  />
+                </Link>
+              </div>
+              
+              <span className="absolute top-4 right-4 bg-[#38bdf8]/10 text-[#38bdf8] text-[10px] font-heading tracking-widest px-2 py-0.5 rounded">
+                {c.code}
+              </span>
+              <h3 className="font-heading font-semibold text-white text-lg mb-2 pr-16 tracking-wide">
+                {c.name}
+              </h3>
+              <p className="text-white/60 text-sm mb-4">{desc}</p>
+              <span className="text-[#38bdf8] text-xs font-heading tracking-widest">
+                Guidebook coming soon &rarr;
+              </span>
+            </StaggerItem>
+          ))}
+        </Stagger>
 
         <Reveal className="mb-20">
           <div className="bg-[#1a3d5c]/20 border border-[#38bdf8]/20 rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">

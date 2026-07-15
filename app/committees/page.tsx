@@ -25,7 +25,7 @@ export default function CommitteesPage() {
         />
         <Reveal className="relative max-w-3xl mx-auto text-center">
           <div className="inline-block border border-[#38bdf8]/30 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1 rounded-sm mb-5">
-            COMMITTEES REVEALED
+            ANNOUNCING COMMITTEES SOON
           </div>
           <h1
             className="font-display text-white text-balance"

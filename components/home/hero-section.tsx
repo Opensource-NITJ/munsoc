@@ -62,9 +62,8 @@ export default function HeroSection() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl mx-auto pb-28 pt-10">
-        <Link
-          href="/committees/aippm"
-          className={`inline-flex items-center gap-2 border border-[#38bdf8]/35 bg-[#38bdf8]/5 text-[#38bdf8] hover:border-[#38bdf8]/60 hover:bg-[#38bdf8]/10 text-[10px] font-heading tracking-[0.2em] px-4 py-1.5 rounded-full mb-6 transition-all duration-300 hover:scale-105 shadow-md shadow-[#38bdf8]/5 ${
+        <div
+          className={`inline-flex items-center gap-2 border border-[#38bdf8]/40 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1.5 rounded-sm mb-6 ${
             reduce ? "" : "animate-hero-fade-in-up"
           }`}
           style={{
@@ -73,9 +72,9 @@ export default function HeroSection() {
             ["--target-opacity" as any]: 1,
           } as React.CSSProperties}
         >
-          <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full animate-ping" />
-          ONLINE MUN (AIPPM): 16 JULY 9AM &rarr;
-        </Link>
+          <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full animate-pulse" />
+          THE WAIT IS OVER &nbsp;&middot;&nbsp; WE ARE BACK
+        </div>
 
         <h1
           className="font-display text-white leading-[0.95] text-balance"
@@ -157,11 +156,11 @@ export default function HeroSection() {
             transition={{ duration: 0.2 }}
           >
             <Link
-              href="/committees/aippm"
+              href="/join"
               className="bg-[#38bdf8] text-[#0a0a0a] font-display text-sm tracking-widest px-7 py-3 rounded-lg hover:bg-[#7dd3fc] transition-colors inline-block shadow-lg shadow-[#38bdf8]/25"
               style={{ letterSpacing: "0.1em" }}
             >
-              PARTICIPATE NOW
+              APPLY TO MUNSOC
             </Link>
           </motion.div>
           <motion.div
