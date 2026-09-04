@@ -30,7 +30,8 @@
  * paste your Google Sheet ID or full URL below.
  * If you opened this via "Extensions > Apps Script" inside the Sheet, leave this empty ("").
  */
-const SPREADSHEET_ID = "";
+const SPREADSHEET_ID =
+  PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID") || "";
 
 // Recipient email(s) for Secretariat notifications & security alerts
 const NOTIFICATION_EMAILS = "nitjmunsoc@gmail.com";
