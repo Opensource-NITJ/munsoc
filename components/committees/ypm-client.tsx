@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from "motion/react";
 import QRCode from "qrcode";
 
 // CONFIGURATION: Payment URI
-const UPI_ID = "manroopprsnl@oksbi";
+const UPI_ID = "aumansh@slc";
 
 // Categorized Portfolios for Youth Parliament (YPM)
 export const GOVERNMENT_MEMBERS = [
