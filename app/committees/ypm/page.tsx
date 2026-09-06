@@ -41,17 +41,16 @@ export default function YpmPage() {
             PARLIAMENTARY COMMITTEE &bull; 10 OCTOBER 2026
           </div>
           <h1
-            className="font-poster text-white whitespace-nowrap uppercase leading-[0.85]"
+            className="font-poster text-white uppercase leading-[0.85] text-center"
             style={{
-              fontSize: "clamp(3.5rem, 8vw, 6rem)",
+              fontSize: "clamp(3.0rem, 8vw, 6rem)",
               letterSpacing: "0.02em",
               transform: "scaleY(1.4)",
-              display: "inline-block",
             }}
           >
             YOUTH PARLIAMENT
           </h1>
-          <p className="mt-4 text-[#38bdf8] font-heading font-semibold text-xs sm:text-sm tracking-[0.15em] uppercase mb-4">
+          <p className="mt-5 text-[#38bdf8] font-heading font-semibold text-xs sm:text-sm tracking-[0.15em] uppercase mb-4">
             All India Political Parties Meet (AIPPM)
           </p>
         </Reveal>
