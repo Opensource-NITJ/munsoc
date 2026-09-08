@@ -473,61 +473,84 @@ function CustomDropdown({
           <div className="max-h-64 overflow-y-auto p-1.5 space-y-3">
             {totalResults > 0 ? (
               <>
-                {/* Government Section */}
-                {filteredGov.length > 0 && (
-                  <div>
-                    <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-blue-500/20 rounded">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]" />
-                        <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-blue-300">
-                          Government Side ({GOVERNMENT_MEMBERS.length})
-                        </span>
+                {(() => {
+                  const govSection = filteredGov.length > 0 && (
+                    <div>
+                      <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-blue-500/20 rounded">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]" />
+                          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-blue-300">
+                            Government Side ({GOVERNMENT_MEMBERS.length})
+                          </span>
+                        </div>
+                        {govCapped ? (
+                          <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
+                            22/22 Allotted
+                          </span>
+                        ) : (
+                          <span className="text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
+                            {typeof govCount === "number"
+                              ? `${govCount}/22 Allotted`
+                              : "Available"}
+                          </span>
+                        )}
                       </div>
-                      {govCapped ? (
-                        <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                          22/22 Allotted &bull; Capped
-                        </span>
-                      ) : (
-                        <span className="text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
-                          {typeof govCount === "number"
-                            ? `${govCount}/22 Allotted`
-                            : "Available"}
-                        </span>
-                      )}
+                      <ul className="space-y-1">
+                        {filteredGov.map((opt) => renderOption(opt, govCapped))}
+                      </ul>
                     </div>
-                    <ul className="space-y-1">
-                      {filteredGov.map((opt) => renderOption(opt, govCapped))}
-                    </ul>
-                  </div>
-                )}
+                  );
 
-                {/* Opposition Section */}
-                {filteredOpp.length > 0 && (
-                  <div>
-                    <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-amber-500/20 rounded">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-amber-300">
-                          Opposition Side ({OPPOSITION_MEMBERS.length})
-                        </span>
+                  const oppSection = filteredOpp.length > 0 && (
+                    <div>
+                      <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-amber-500/20 rounded">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-amber-300">
+                            Opposition Side ({OPPOSITION_MEMBERS.length})
+                          </span>
+                        </div>
+                        {oppCapped ? (
+                          <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
+                            25/25 Allotted
+                          </span>
+                        ) : (
+                          <span className="text-amber-300/80 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
+                            {typeof oppCount === "number"
+                              ? `${oppCount}/25 Allotted`
+                              : "Available"}
+                          </span>
+                        )}
                       </div>
-                      {oppCapped ? (
-                        <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                          25/25 Allotted &bull; Capped
-                        </span>
-                      ) : (
-                        <span className="text-amber-300/80 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
-                          {typeof oppCount === "number"
-                            ? `${oppCount}/25 Allotted`
-                            : "Available"}
-                        </span>
-                      )}
+                      <ul className="space-y-1">
+                        {filteredOpp.map((opt) => renderOption(opt, oppCapped))}
+                      </ul>
                     </div>
-                    <ul className="space-y-1">
-                      {filteredOpp.map((opt) => renderOption(opt, oppCapped))}
-                    </ul>
-                  </div>
-                )}
+                  );
+
+                  if (govCapped && !oppCapped) {
+                    return (
+                      <>
+                        {oppSection}
+                        {govSection}
+                      </>
+                    );
+                  }
+                  if (oppCapped && !govCapped) {
+                    return (
+                      <>
+                        {govSection}
+                        {oppSection}
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      {govSection}
+                      {oppSection}
+                    </>
+                  );
+                })()}
               </>
             ) : (
               <div className="p-4 text-center text-xs text-white/40">
