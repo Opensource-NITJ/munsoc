@@ -485,12 +485,12 @@ function CustomDropdown({
                       </div>
                       {govCapped ? (
                         <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                          25/25 Allotted &bull; Capped
+                          22/22 Allotted &bull; Capped
                         </span>
                       ) : (
                         <span className="text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
                           {typeof govCount === "number"
-                            ? `${govCount}/25 Allotted`
+                            ? `${govCount}/22 Allotted`
                             : "Available"}
                         </span>
                       )}
@@ -711,7 +711,7 @@ export default function YpmClient() {
         const oppFilled =
           typeof data.oppCount === "number" ? data.oppCount : countOpp;
 
-        const govCapReached = Boolean(data.isGovCapped) || govFilled >= 25;
+        const govCapReached = Boolean(data.isGovCapped) || govFilled >= 22;
         const oppCapReached = Boolean(data.isOppCapped) || oppFilled >= 25;
 
         setGovCount(govFilled);
@@ -1268,7 +1268,7 @@ export default function YpmClient() {
           ) : !isLoadingPortfolios &&
             (isClosed ||
               (isGovCapped && isOppCapped) ||
-              (govCount >= 25 && oppCount >= 25) ||
+              (govCount >= 22 && oppCount >= 25) ||
               allottedPortfolios.length >= memberList.length) ? (
             <motion.div
               key="registrations-closed"
@@ -1414,8 +1414,8 @@ export default function YpmClient() {
                             }`}
                           >
                             {isGovCapped
-                              ? "25/25 ALLOTTED (CAPPED)"
-                              : `${govCount}/25 ALLOTTED`}
+                              ? "22/22 ALLOTTED"
+                              : `${govCount}/22 ALLOTTED`}
                           </span>
                         </div>
                         <div className="w-full bg-white/10 h-1.5 rounded-full mt-2.5 overflow-hidden">
@@ -1424,14 +1424,14 @@ export default function YpmClient() {
                               isGovCapped ? "bg-red-400" : "bg-[#38bdf8]"
                             }`}
                             style={{
-                              width: `${Math.min(100, (govCount / 25) * 100)}%`,
+                              width: `${Math.min(100, (govCount / 22) * 100)}%`,
                             }}
                           />
                         </div>
                         <p className="text-[10px] mt-1.5 text-white/50">
                           {isGovCapped
-                            ? "25/25 Government seats allotted. All Government MPs marked Allotted."
-                            : `${Math.max(0, 25 - govCount)} seat${25 - govCount === 1 ? "" : "s"} remaining.`}
+                            ? "22/22 Government seats allotted."
+                            : `${Math.max(0, 22 - govCount)} seat${22 - govCount === 1 ? "" : "s"} remaining.`}
                         </p>
                       </div>
 
@@ -1458,7 +1458,7 @@ export default function YpmClient() {
                             }`}
                           >
                             {isOppCapped
-                              ? "25/25 ALLOTTED (CAPPED)"
+                              ? "25/25 ALLOTTED"
                               : `${oppCount}/25 ALLOTTED`}
                           </span>
                         </div>
@@ -1474,7 +1474,7 @@ export default function YpmClient() {
                         </div>
                         <p className="text-[10px] mt-1.5 text-white/50">
                           {isOppCapped
-                            ? "25/25 Opposition seats allotted. All Opposition MPs marked Allotted."
+                            ? "25/25 Opposition seats allotted."
                             : `${Math.max(0, 25 - oppCount)} seat${25 - oppCount === 1 ? "" : "s"} remaining.`}
                         </p>
                       </div>
