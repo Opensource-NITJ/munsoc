@@ -12,8 +12,9 @@ const committees = [
     desc: "This conference agenda focuses on modernizing India's educational ecosystem, shifting from rote learning to competency-based evaluation.",
     href: "/committees/ypm",
     date: "10 October 2026",
-    mode: "TBA",
-    agenda: "Discussions on comprehensive reforms to the Indian examination system.",
+    mode: "NIT Jalandhar",
+    agenda:
+      "Discussions on comprehensive reforms to the Indian examination system.",
   },
 ];
 
@@ -88,7 +89,6 @@ export default function CommitteesSection() {
                       Agenda:
                     </span>
                     <span className="text-[#38bdf8]/80 text-[9px] font-heading font-semibold tracking-widest uppercase flex items-center gap-1">
-                      <span className="w-1 h-1 bg-[#38bdf8] rounded-full animate-pulse" />
                       {c.agenda}
                     </span>
                   </div>
