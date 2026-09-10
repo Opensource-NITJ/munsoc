@@ -94,6 +94,7 @@ export const OPPOSITION_MEMBERS = [
   "Chandrashekhar Azad (MP, Nagina)",
   "Amritpal Singh (MP, Khadoor Sahib)",
   "Priyanka Gandhi Vadra (MP, Wayanad)",
+  "Charanjit Singh Channi (MP, Jalandhar)",
 ];
 
 export const memberList = [...GOVERNMENT_MEMBERS, ...OPPOSITION_MEMBERS];
