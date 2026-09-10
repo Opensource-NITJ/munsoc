@@ -93,6 +93,7 @@ export const OPPOSITION_MEMBERS = [
   "Asaduddin Owaisi (MP, Hyderabad)",
   "Chandrashekhar Azad (MP, Nagina)",
   "Amritpal Singh (MP, Khadoor Sahib)",
+  "Priyanka Gandhi Vadra (MP, Wayanad)",
 ];
 
 export const memberList = [...GOVERNMENT_MEMBERS, ...OPPOSITION_MEMBERS];
