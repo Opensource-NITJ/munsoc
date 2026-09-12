@@ -24,8 +24,19 @@ import QRCode from "qrcode";
 // CONFIGURATION: Payment URI
 const UPI_ID = "manroopprsnl@oksbi";
 
+export const MAX_GOV_SEATS = 25;
+export const MAX_OPP_SEATS = 25;
+export const TOTAL_SEATS = MAX_GOV_SEATS + MAX_OPP_SEATS;
+
 // Categorized Portfolios for Youth Parliament (YPM)
 export const GOVERNMENT_MEMBERS = [
+  "Yogi Adityanath (Chief Minister, Uttar Pradesh)",
+  "Devendra Fadnavis (Chief Minister, Maharashtra)",
+  "Himanta Biswa Sarma (Chief Minister, Assam)",
+  "Smriti Irani (Former Union Minister)",
+  "Nishikant Dubey (MP, Godda)",
+  "Baijayant Panda (MP, Kendrapara)",
+  "Manoj Tiwari (MP, North East Delhi)",
   "Raghav Chadha (MP (Rajya Sabha))",
   "Narendra Modi (Prime Minister)",
   "Amit Shah (Minister of Home Affairs)",
@@ -59,6 +70,8 @@ export const GOVERNMENT_MEMBERS = [
 ];
 
 export const OPPOSITION_MEMBERS = [
+  "P. Chidambaram (MP (Rajya Sabha))",
+  "Sharad Pawar (MP (Rajya Sabha))",
   "Rahul Gandhi (Leader of the Opposition (Lok Sabha))",
   "Mallikarjun Kharge (Leader of the Opposition (Rajya Sabha))",
   "Shashi Tharoor (MP, Thiruvananthapuram)",
@@ -426,7 +439,7 @@ function CustomDropdown({
             </span>
           )}
           {value && isValueOpp && (
-            <span className="text-[9px] uppercase tracking-wider font-heading font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+            <span className="text-[9px] uppercase tracking-wider font-heading font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30 shrink-0">
               Opp
             </span>
           )}
@@ -487,12 +500,12 @@ function CustomDropdown({
                         </div>
                         {govCapped ? (
                           <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                            22/22 Allotted
+                            {MAX_GOV_SEATS}/{MAX_GOV_SEATS} Allotted
                           </span>
                         ) : (
                           <span className="text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
                             {typeof govCount === "number"
-                              ? `${govCount}/22 Allotted`
+                              ? `${govCount}/${MAX_GOV_SEATS} Allotted`
                               : "Available"}
                           </span>
                         )}
@@ -505,21 +518,21 @@ function CustomDropdown({
 
                   const oppSection = filteredOpp.length > 0 && (
                     <div>
-                      <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-amber-500/20 rounded">
+                      <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-orange-500/20 rounded">
                         <div className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-amber-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
+                          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-orange-300">
                             Opposition Side ({OPPOSITION_MEMBERS.length})
                           </span>
                         </div>
                         {oppCapped ? (
                           <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                            25/25 Allotted
+                            {MAX_OPP_SEATS}/{MAX_OPP_SEATS} Allotted
                           </span>
                         ) : (
-                          <span className="text-amber-300/80 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
+                          <span className="text-orange-300/80 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
                             {typeof oppCount === "number"
-                              ? `${oppCount}/25 Allotted`
+                              ? `${oppCount}/${MAX_OPP_SEATS} Allotted`
                               : "Available"}
                           </span>
                         )}
@@ -736,8 +749,10 @@ export default function YpmClient() {
         const oppFilled =
           typeof data.oppCount === "number" ? data.oppCount : countOpp;
 
-        const govCapReached = Boolean(data.isGovCapped) || govFilled >= 22;
-        const oppCapReached = Boolean(data.isOppCapped) || oppFilled >= 25;
+        const govCapReached =
+          Boolean(data.isGovCapped) || govFilled >= MAX_GOV_SEATS;
+        const oppCapReached =
+          Boolean(data.isOppCapped) || oppFilled >= MAX_OPP_SEATS;
 
         setGovCount(govFilled);
         setOppCount(oppFilled);
@@ -745,7 +760,7 @@ export default function YpmClient() {
         setIsOppCapped(oppCapReached);
         setIsClosed(Boolean(data.isClosed) || (govCapReached && oppCapReached));
 
-        // When one side reaches 25, all MPs on that side get marked Allotted!
+        // When one side reaches its seat limit, all MPs on that side get marked Allotted!
         const effectiveList = new Set<string>(rawList);
         if (govCapReached) {
           GOVERNMENT_MEMBERS.forEach((m) => effectiveList.add(m));
@@ -834,7 +849,7 @@ export default function YpmClient() {
     ) {
       showCustomAlert(
         "Portfolio Unavailable",
-        "One or more of your selected preferences has already been allotted or belongs to a side that has reached its 25-member capacity. Please select from available portfolios.",
+        "One or more of your selected preferences has already been allotted or belongs to a side that has reached its seat capacity. Please select from available portfolios.",
       );
       return;
     }
@@ -1293,7 +1308,7 @@ export default function YpmClient() {
           ) : !isLoadingPortfolios &&
             (isClosed ||
               (isGovCapped && isOppCapped) ||
-              (govCount >= 22 && oppCount >= 25) ||
+              (govCount >= MAX_GOV_SEATS && oppCount >= MAX_OPP_SEATS) ||
               allottedPortfolios.length >= memberList.length) ? (
             <motion.div
               key="registrations-closed"
@@ -1414,94 +1429,391 @@ export default function YpmClient() {
                       </h4>
                     </div>
 
-                    {/* Side Capacity Status Tracker */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-                      {/* Government side status */}
-                      <div
-                        className={`p-3 rounded-xl border transition-all ${
-                          isGovCapped
-                            ? "bg-red-500/10 border-red-500/30 text-red-300"
-                            : "bg-blue-500/10 border-blue-500/20 text-blue-200"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-xs font-heading font-semibold">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
-                            <span className="font-heading font-bold text-xs uppercase tracking-wider text-white">
-                              Government Side ({GOVERNMENT_MEMBERS.length})
-                            </span>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                              isGovCapped
-                                ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                            }`}
-                          >
-                            {isGovCapped
-                              ? "22/22 ALLOTTED"
-                              : `${govCount}/22 ALLOTTED`}
+                    {/* Parliament Hemicycle Chart */}
+                    <div className="mb-2">
+                      <div className="bg-[#121212] border border-white/5 rounded-xl p-4 sm:p-5">
+                        {/* Remaining seats count on top */}
+                        <div className="flex flex-col items-center justify-center mb-2 text-center">
+                          <span className="font-mono text-xl sm:text-2xl font-bold text-white tracking-tight">
+                            {Math.max(0, TOTAL_SEATS - govCount - oppCount)}/
+                            {TOTAL_SEATS}
+                          </span>
+                          <span className="text-[10px] font-heading font-medium tracking-widest uppercase text-white/40">
+                            Seats Remaining
                           </span>
                         </div>
-                        <div className="w-full bg-white/10 h-1.5 rounded-full mt-2.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              isGovCapped ? "bg-red-400" : "bg-[#38bdf8]"
-                            }`}
-                            style={{
-                              width: `${Math.min(100, (govCount / 22) * 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <p className="text-[10px] mt-1.5 text-white/50">
-                          {isGovCapped
-                            ? "22/22 Government seats allotted."
-                            : `${Math.max(0, 22 - govCount)} seat${22 - govCount === 1 ? "" : "s"} remaining.`}
-                        </p>
-                      </div>
 
-                      {/* Opposition side status */}
-                      <div
-                        className={`p-3 rounded-xl border transition-all ${
-                          isOppCapped
-                            ? "bg-red-500/10 border-red-500/30 text-red-300"
-                            : "bg-amber-500/10 border-amber-500/20 text-amber-200"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-xs font-heading font-semibold">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-400" />
-                            <span className="font-heading font-bold text-xs uppercase tracking-wider text-white">
-                              Opposition Side ({OPPOSITION_MEMBERS.length})
-                            </span>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                              isOppCapped
-                                ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                                : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            }`}
+                        {/* Hemicycle SVG */}
+                        <div className="flex justify-center">
+                          <svg
+                            viewBox="0 0 440 260"
+                            className="w-full max-w-[460px]"
+                            xmlns="http://www.w3.org/2000/svg"
                           >
-                            {isOppCapped
-                              ? "25/25 ALLOTTED"
-                              : `${oppCount}/25 ALLOTTED`}
-                          </span>
+                            <defs>
+                              <radialGradient
+                                id="podium-grad"
+                                cx="50%"
+                                cy="50%"
+                                r="50%"
+                              >
+                                <stop
+                                  offset="0%"
+                                  stopColor="white"
+                                  stopOpacity="0.06"
+                                />
+                                <stop
+                                  offset="100%"
+                                  stopColor="white"
+                                  stopOpacity="0.01"
+                                />
+                              </radialGradient>
+                            </defs>
+
+                            {/* Parliament hemicycle: dynamically calculated from MAX_GOV_SEATS and MAX_OPP_SEATS */}
+                            {(() => {
+                              const centerX = 220;
+                              const centerY = 230;
+                              const totalGov = MAX_GOV_SEATS;
+                              const totalOpp = MAX_OPP_SEATS;
+                              const totalSeats = TOTAL_SEATS;
+
+                              if (totalSeats <= 0) return null;
+
+                              // Dynamically select number of concentric arcs based on total seat count
+                              const numRows =
+                                totalSeats >= 70
+                                  ? 6
+                                  : totalSeats >= 40
+                                    ? 5
+                                    : totalSeats >= 20
+                                      ? 4
+                                      : 3;
+                              const minRadius = 65;
+                              const maxRadius = 185;
+
+                              const radii: number[] = [];
+                              for (let r = 0; r < numRows; r++) {
+                                radii.push(
+                                  minRadius +
+                                    (r * (maxRadius - minRadius)) /
+                                      (numRows - 1),
+                                );
+                              }
+
+                              const totalRadius = radii.reduce(
+                                (sum, r) => sum + r,
+                                0,
+                              );
+
+                              // Distribute totalGov across rows proportionally (Largest Remainder method)
+                              const govPerRaw = radii.map(
+                                (r) => (r / totalRadius) * totalGov,
+                              );
+                              const govPerRow = govPerRaw.map((v) =>
+                                Math.floor(v),
+                              );
+                              let govRemainder =
+                                totalGov - govPerRow.reduce((a, b) => a + b, 0);
+                              const govDecimals = govPerRaw
+                                .map((v, i) => ({
+                                  val: v - Math.floor(v),
+                                  index: i,
+                                }))
+                                .sort((a, b) => b.val - a.val);
+                              for (let i = 0; i < govRemainder; i++) {
+                                govPerRow[
+                                  govDecimals[i % govDecimals.length].index
+                                ]++;
+                              }
+
+                              // Distribute totalOpp across rows proportionally (Largest Remainder method)
+                              const oppPerRaw = radii.map(
+                                (r) => (r / totalRadius) * totalOpp,
+                              );
+                              const oppPerRow = oppPerRaw.map((v) =>
+                                Math.floor(v),
+                              );
+                              let oppRemainder =
+                                totalOpp - oppPerRow.reduce((a, b) => a + b, 0);
+                              const oppDecimals = oppPerRaw
+                                .map((v, i) => ({
+                                  val: v - Math.floor(v),
+                                  index: i,
+                                }))
+                                .sort((a, b) => b.val - a.val);
+                              for (let i = 0; i < oppRemainder; i++) {
+                                oppPerRow[
+                                  oppDecimals[i % oppDecimals.length].index
+                                ]++;
+                              }
+
+                              // Dynamically calculate dot radius based on maximum seats in any single row
+                              const maxSeatsInAnyRow = Math.max(
+                                ...radii.map(
+                                  (_, i) => govPerRow[i] + oppPerRow[i],
+                                ),
+                                1,
+                              );
+                              const dotRadius = Math.max(
+                                4.5,
+                                Math.min(7, 190 / (maxSeatsInAnyRow * 1.6)),
+                              );
+
+                              const govSeats: {
+                                x: number;
+                                y: number;
+                                angle: number;
+                                radius: number;
+                              }[] = [];
+                              const oppSeats: {
+                                x: number;
+                                y: number;
+                                angle: number;
+                                radius: number;
+                              }[] = [];
+
+                              for (let r = 0; r < numRows; r++) {
+                                const govCountInRow = govPerRow[r];
+                                const oppCountInRow = oppPerRow[r];
+                                const seatsInRow =
+                                  govCountInRow + oppCountInRow;
+                                const radius = radii[r];
+
+                                if (seatsInRow <= 0) continue;
+
+                                const angleStart = Math.PI * 0.95;
+                                const angleEnd = Math.PI * 0.05;
+                                const angleRange = angleStart - angleEnd;
+
+                                for (let i = 0; i < seatsInRow; i++) {
+                                  const angle =
+                                    seatsInRow === 1
+                                      ? Math.PI / 2
+                                      : angleStart -
+                                        (i / (seatsInRow - 1)) * angleRange;
+                                  const x = centerX + radius * Math.cos(angle);
+                                  const y = centerY - radius * Math.sin(angle);
+
+                                  const isGov = i < govCountInRow;
+                                  if (isGov) {
+                                    govSeats.push({ x, y, angle, radius });
+                                  } else {
+                                    oppSeats.push({ x, y, angle, radius });
+                                  }
+                                }
+                              }
+
+                              // Center divider is at angle = Math.PI / 2 (90 degrees).
+                              // Sort seats by distance from the center aisle so seats flanking the aisle fill first,
+                              // and vacant seats naturally remain at the outer ends/wings!
+                              govSeats.sort(
+                                (a, b) =>
+                                  Math.abs(a.angle - Math.PI / 2) * 1000 +
+                                  a.radius -
+                                  (Math.abs(b.angle - Math.PI / 2) * 1000 +
+                                    b.radius),
+                              );
+                              oppSeats.sort(
+                                (a, b) =>
+                                  Math.abs(a.angle - Math.PI / 2) * 1000 +
+                                  a.radius -
+                                  (Math.abs(b.angle - Math.PI / 2) * 1000 +
+                                    b.radius),
+                              );
+
+                              const allSeats: {
+                                x: number;
+                                y: number;
+                                side: "gov" | "opp";
+                                filled: boolean;
+                              }[] = [
+                                ...govSeats.map((s, idx) => ({
+                                  x: s.x,
+                                  y: s.y,
+                                  side: "gov" as const,
+                                  filled: idx < govCount,
+                                })),
+                                ...oppSeats.map((s, idx) => ({
+                                  x: s.x,
+                                  y: s.y,
+                                  side: "opp" as const,
+                                  filled: idx < oppCount,
+                                })),
+                              ];
+
+                              return (
+                                <>
+                                  {/* Concentric tier guide arcs */}
+                                  {radii.map((radius, idx) => {
+                                    const startX =
+                                      centerX +
+                                      radius * Math.cos(Math.PI * 0.95);
+                                    const startY =
+                                      centerY -
+                                      radius * Math.sin(Math.PI * 0.95);
+                                    const endX =
+                                      centerX +
+                                      radius * Math.cos(Math.PI * 0.05);
+                                    const endY =
+                                      centerY -
+                                      radius * Math.sin(Math.PI * 0.05);
+                                    return (
+                                      <path
+                                        key={`arc-guide-${idx}`}
+                                        d={`M ${Number(startX.toFixed(2))} ${Number(startY.toFixed(2))} A ${radius} ${radius} 0 0 1 ${Number(endX.toFixed(2))} ${Number(endY.toFixed(2))}`}
+                                        fill="none"
+                                        stroke="white"
+                                        strokeOpacity={0.05}
+                                        strokeWidth={1}
+                                      />
+                                    );
+                                  })}
+
+                                  {/* Speaker podium at center bottom */}
+                                  <path
+                                    d={`M ${centerX - 28} ${centerY} A 28 28 0 0 1 ${centerX + 28} ${centerY}`}
+                                    fill="url(#podium-grad)"
+                                    stroke="white"
+                                    strokeOpacity={0.1}
+                                    strokeWidth={1}
+                                  />
+                                  <text
+                                    x={centerX}
+                                    y={centerY - 10}
+                                    textAnchor="middle"
+                                    fill="white"
+                                    fillOpacity={0.2}
+                                    fontSize="6"
+                                    fontWeight="700"
+                                    letterSpacing="0.15em"
+                                    fontFamily="inherit"
+                                  >
+                                    SPEAKER
+                                  </text>
+
+                                  {/* Center divider line */}
+                                  <line
+                                    x1={centerX}
+                                    y1={centerY - 30}
+                                    x2={centerX}
+                                    y2={centerY - 195}
+                                    stroke="white"
+                                    strokeOpacity={0.1}
+                                    strokeWidth={1.5}
+                                    strokeDasharray="4 4"
+                                  />
+
+                                  {/* Render seats: clean neutral gray when vacant; solid electric blue or orange when allotted */}
+                                  {allSeats.map((dot, i) => {
+                                    const isGov = dot.side === "gov";
+                                    const cx = Number(dot.x.toFixed(2));
+                                    const cy = Number(dot.y.toFixed(2));
+
+                                    if (!dot.filled) {
+                                      return (
+                                        <circle
+                                          key={`seat-${i}`}
+                                          cx={cx}
+                                          cy={cy}
+                                          r={dotRadius}
+                                          fill="#27272a"
+                                          stroke="#3f3f46"
+                                          strokeWidth={1}
+                                          aria-label={`${isGov ? "Government" : "Opposition"}: Available`}
+                                          title={`${isGov ? "Government" : "Opposition"}: Available`}
+                                          className="cursor-pointer transition-colors duration-150"
+                                        />
+                                      );
+                                    }
+
+                                    return (
+                                      <circle
+                                        key={`seat-${i}`}
+                                        cx={cx}
+                                        cy={cy}
+                                        r={dotRadius}
+                                        fill={isGov ? "#38bdf8" : "#f97316"}
+                                        aria-label={`${isGov ? "Government" : "Opposition"}: Allotted`}
+                                        title={`${isGov ? "Government" : "Opposition"}: Allotted`}
+                                        className="cursor-pointer transition-colors duration-150"
+                                      />
+                                    );
+                                  })}
+
+                                  {/* Side labels with color indicators */}
+                                  <g transform="translate(80, 248)">
+                                    <text
+                                      textAnchor="middle"
+                                      fill="#38bdf8"
+                                      fontSize="10"
+                                      fontWeight="800"
+                                      letterSpacing="0.12em"
+                                      fontFamily="inherit"
+                                    >
+                                      GOVERNMENT
+                                    </text>
+                                  </g>
+                                  <g transform="translate(360, 248)">
+                                    <text
+                                      textAnchor="middle"
+                                      fill="#f97316"
+                                      fontSize="10"
+                                      fontWeight="800"
+                                      letterSpacing="0.12em"
+                                      fontFamily="inherit"
+                                    >
+                                      OPPOSITION
+                                    </text>
+                                  </g>
+                                </>
+                              );
+                            })()}
+                          </svg>
                         </div>
-                        <div className="w-full bg-white/10 h-1.5 rounded-full mt-2.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              isOppCapped ? "bg-red-400" : "bg-amber-400"
-                            }`}
-                            style={{
-                              width: `${Math.min(100, (oppCount / 25) * 100)}%`,
-                            }}
-                          />
+
+                        {/* Legend & Stats below hemicycle */}
+                        <div className="mt-4 pt-3 border-t border-white/5">
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Government stats */}
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-[#38bdf8]" />
+                                <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-blue-400">
+                                  Govt
+                                </span>
+                              </div>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
+                                  isGovCapped
+                                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                                    : "bg-blue-500/15 text-blue-300 border border-blue-500/25"
+                                }`}
+                              >
+                                {govCount}/{MAX_GOV_SEATS}
+                              </span>
+                            </div>
+
+                            {/* Opposition stats */}
+                            <div className="flex items-center justify-end gap-3">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
+                                  isOppCapped
+                                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                                    : "bg-orange-500/15 text-orange-300 border border-orange-500/25"
+                                }`}
+                              >
+                                {oppCount}/{MAX_OPP_SEATS}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-orange-400">
+                                  Opp
+                                </span>
+                                <span className="w-3 h-3 rounded-full bg-[#f97316]" />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-[10px] mt-1.5 text-white/50">
-                          {isOppCapped
-                            ? "25/25 Opposition seats allotted."
-                            : `${Math.max(0, 25 - oppCount)} seat${25 - oppCount === 1 ? "" : "s"} remaining.`}
-                        </p>
                       </div>
                     </div>
 
