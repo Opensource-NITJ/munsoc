@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadRefMap } from "../shared";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const GOOGLE_SHEET_WEBHOOK_URL =
   process.env.YPM_GOOGLE_SHEET_WEBHOOK_URL ||
   process.env.GOOGLE_SHEET_WEBHOOK_URL ||
@@ -31,6 +34,118 @@ const rateLimitSubmissionLog = new Map<
 
 let lastCleanup = Date.now();
 const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
+
+// Remembers last known good allotment data so temporary timeouts never flash to 0 seats
+let lastSuccessfulAllotmentData: any = null;
+let lastFetchTimestamp = 0;
+let inFlightFetchPromise: Promise<any> | null = null;
+let googleCooldownUntil = 0;
+const FRESHNESS_TTL_MS = 5000; // 5-second micro-cache to prevent hammering Google Apps Script
+
+async function fetchAllotmentFromGoogle(): Promise<any> {
+  const now = Date.now();
+
+  // 1. If within freshness TTL, return immediately
+  if (
+    lastSuccessfulAllotmentData &&
+    now - lastFetchTimestamp < FRESHNESS_TTL_MS
+  ) {
+    return lastSuccessfulAllotmentData;
+  }
+
+  // 2. If Google is currently on rate-limit cooldown, serve last known good data immediately
+  if (now < googleCooldownUntil && lastSuccessfulAllotmentData) {
+    return lastSuccessfulAllotmentData;
+  }
+
+  // 3. Deduplicate in-flight requests
+  if (inFlightFetchPromise) {
+    return inFlightFetchPromise;
+  }
+
+  inFlightFetchPromise = (async () => {
+    if (!GOOGLE_SHEET_WEBHOOK_URL) return null;
+    try {
+      const response = await fetch(
+        WEBHOOK_SECRET
+          ? `${GOOGLE_SHEET_WEBHOOK_URL}?secret=${WEBHOOK_SECRET}`
+          : GOOGLE_SHEET_WEBHOOK_URL,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(18000),
+        },
+      );
+
+      const responseText = await response.text();
+      let result: any = null;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        console.warn(
+          `[MUNSoC Register] Google script returned non-JSON (status ${response.status}). Using last known good allotment data.`,
+        );
+        googleCooldownUntil = Date.now() + 15000;
+        return lastSuccessfulAllotmentData || null;
+      }
+
+      if (
+        result &&
+        (result.result === "success" || result.status === "success")
+      ) {
+        const allottedList = Array.isArray(result.allotted)
+          ? result.allotted
+          : Array.isArray(result.allottedPortfolios)
+            ? result.allottedPortfolios
+            : [];
+
+        const payload = {
+          success: true,
+          allotted: allottedList,
+          allottedPortfolios: allottedList,
+          totalAllotted: allottedList.length,
+          actualAllotted: Array.isArray(result.actualAllotted)
+            ? result.actualAllotted
+            : [],
+          govCount: typeof result.govCount === "number" ? result.govCount : 0,
+          oppCount: typeof result.oppCount === "number" ? result.oppCount : 0,
+          sideLimit:
+            typeof result.sideLimit === "number" ? result.sideLimit : 25,
+          isGovCapped: Boolean(result.isGovCapped),
+          isOppCapped: Boolean(result.isOppCapped),
+          isClosed: Boolean(result.isClosed || result.closed),
+          portfolioLimit:
+            typeof result.portfolioLimit === "number"
+              ? result.portfolioLimit
+              : DEFAULT_PORTFOLIO_LIMIT,
+        };
+
+        lastSuccessfulAllotmentData = payload;
+        lastFetchTimestamp = Date.now();
+        googleCooldownUntil = 0;
+        return payload;
+      } else {
+        googleCooldownUntil = Date.now() + 15000;
+        return lastSuccessfulAllotmentData || null;
+      }
+    } catch (err: any) {
+      console.warn(
+        `[MUNSoC Register] Live Google script GET fetch failed (${err.name || err.message}).`,
+      );
+      googleCooldownUntil = Date.now() + 10000;
+      return lastSuccessfulAllotmentData || null;
+    } finally {
+      inFlightFetchPromise = null;
+    }
+  })();
+
+  return inFlightFetchPromise;
+}
 
 function escapeHtml(str: any): string {
   if (!str) return "";
@@ -264,25 +379,7 @@ export async function POST(req: NextRequest) {
 
     if (GOOGLE_SHEET_WEBHOOK_URL) {
       try {
-        const checkResponse = await fetch(
-          WEBHOOK_SECRET
-            ? `${GOOGLE_SHEET_WEBHOOK_URL}?secret=${WEBHOOK_SECRET}`
-            : GOOGLE_SHEET_WEBHOOK_URL,
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: AbortSignal.timeout(10000),
-          },
-        );
-
-        const checkText = await checkResponse.text();
-        let checkResult: any = {};
-        try {
-          checkResult = JSON.parse(checkText);
-        } catch {
-          checkResult = {};
-        }
-
+        const checkResult = (await fetchAllotmentFromGoogle()) || {};
         const portfolioLimit =
           checkResult.portfolioLimit || DEFAULT_PORTFOLIO_LIMIT;
         const allottedList = Array.isArray(checkResult.allotted)
@@ -589,7 +686,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
       "127.0.0.1";
     const rateLimited = isRateLimited(ip);
@@ -602,84 +699,70 @@ export async function GET(req: NextRequest) {
         success: true,
         allotted: [],
         allottedPortfolios: [],
+        totalAllotted: 0,
+        actualAllotted: [],
+        govCount: 0,
+        oppCount: 0,
+        sideLimit: 25,
+        isGovCapped: false,
+        isOppCapped: false,
         isClosed: false,
         rateLimited,
       });
     }
 
-    const response = await fetch(
-      WEBHOOK_SECRET
-        ? `${GOOGLE_SHEET_WEBHOOK_URL}?secret=${WEBHOOK_SECRET}`
-        : GOOGLE_SHEET_WEBHOOK_URL,
-      {
-        method: "GET",
-        cache: "no-store",
-        signal: AbortSignal.timeout(10000),
-      },
-    );
-
-    const responseText = await response.text();
-    let result: any = {};
     try {
-      result = JSON.parse(responseText);
-    } catch {
-      console.warn(
-        "[MUNSoC Register] Non-JSON GET response from Google Sheet Webhook:",
-        responseText.slice(0, 200),
-      );
-      result = {
-        result: "error",
-        error: "Invalid JSON returned by sheet script",
-      };
-    }
-
-    if (result.result === "success" || result.status === "success") {
-      const allottedList = Array.isArray(result.allotted)
-        ? result.allotted
-        : Array.isArray(result.allottedPortfolios)
-          ? result.allottedPortfolios
-          : [];
-
-      return NextResponse.json({
-        success: true,
-        allotted: allottedList,
-        allottedPortfolios: allottedList,
-        totalAllotted: allottedList.length,
-        actualAllotted: Array.isArray(result.actualAllotted)
-          ? result.actualAllotted
-          : [],
-        govCount: typeof result.govCount === "number" ? result.govCount : 0,
-        oppCount: typeof result.oppCount === "number" ? result.oppCount : 0,
-        sideLimit: typeof result.sideLimit === "number" ? result.sideLimit : 25,
-        isGovCapped: Boolean(result.isGovCapped),
-        isOppCapped: Boolean(result.isOppCapped),
-        isClosed: Boolean(result.isClosed || result.closed),
-        rateLimited,
-      });
-    } else {
-      console.error("[MUNSoC Register] Google script GET error:", result.error);
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error || "Failed to fetch allocation data",
-          allotted: [],
-          allottedPortfolios: [],
+      const data = await fetchAllotmentFromGoogle();
+      if (data) {
+        return NextResponse.json({
+          ...data,
           rateLimited,
-        },
-        { status: 500 },
+        });
+      }
+    } catch (fetchErr: any) {
+      console.warn(
+        `[MUNSoC Register] GET fetchAllotmentFromGoogle failed:`,
+        fetchErr,
       );
     }
+
+    return NextResponse.json({
+      success: true,
+      allotted: [],
+      allottedPortfolios: [],
+      totalAllotted: 0,
+      actualAllotted: [],
+      govCount: 0,
+      oppCount: 0,
+      sideLimit: 25,
+      isGovCapped: false,
+      isOppCapped: false,
+      isClosed: false,
+      rateLimited,
+      fallback: true,
+    });
   } catch (err) {
-    console.error("[MUNSoC Register] GET Error:", err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Server error",
-        allotted: [],
-        allottedPortfolios: [],
+    console.error("[MUNSoC Register] GET Unexpected Error:", err);
+    if (lastSuccessfulAllotmentData) {
+      return NextResponse.json({
+        ...lastSuccessfulAllotmentData,
         rateLimited: false,
-      },
-      { status: 500 },
-    );
+      });
+    }
+    return NextResponse.json({
+      success: true,
+      allotted: [],
+      allottedPortfolios: [],
+      totalAllotted: 0,
+      actualAllotted: [],
+      govCount: 0,
+      oppCount: 0,
+      sideLimit: 25,
+      isGovCapped: false,
+      isOppCapped: false,
+      isClosed: false,
+      rateLimited: false,
+      fallback: true,
+    });
   }
 }
