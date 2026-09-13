@@ -434,12 +434,12 @@ function CustomDropdown({
       >
         <div className="flex items-center gap-2 truncate pr-2">
           {value && isValueGov && (
-            <span className="text-[9px] uppercase tracking-wider font-heading font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 shrink-0">
+            <span className="text-[9px] uppercase tracking-wider font-heading font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30 shrink-0">
               Govt
             </span>
           )}
           {value && isValueOpp && (
-            <span className="text-[9px] uppercase tracking-wider font-heading font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30 shrink-0">
+            <span className="text-[9px] uppercase tracking-wider font-heading font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 shrink-0">
               Opp
             </span>
           )}
@@ -489,39 +489,12 @@ function CustomDropdown({
             {totalResults > 0 ? (
               <>
                 {(() => {
-                  const govSection = filteredGov.length > 0 && (
+                  const oppSection = filteredOpp.length > 0 && (
                     <div>
                       <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-blue-500/20 rounded">
                         <div className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]" />
                           <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-blue-300">
-                            Government Side ({GOVERNMENT_MEMBERS.length})
-                          </span>
-                        </div>
-                        {govCapped ? (
-                          <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                            {MAX_GOV_SEATS}/{MAX_GOV_SEATS} Allotted
-                          </span>
-                        ) : (
-                          <span className="text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
-                            {typeof govCount === "number"
-                              ? `${govCount}/${MAX_GOV_SEATS} Allotted`
-                              : "Available"}
-                          </span>
-                        )}
-                      </div>
-                      <ul className="space-y-1">
-                        {filteredGov.map((opt) => renderOption(opt, govCapped))}
-                      </ul>
-                    </div>
-                  );
-
-                  const oppSection = filteredOpp.length > 0 && (
-                    <div>
-                      <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-orange-500/20 rounded">
-                        <div className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
-                          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-orange-300">
                             Opposition Side ({OPPOSITION_MEMBERS.length})
                           </span>
                         </div>
@@ -530,7 +503,7 @@ function CustomDropdown({
                             {MAX_OPP_SEATS}/{MAX_OPP_SEATS} Allotted
                           </span>
                         ) : (
-                          <span className="text-orange-300/80 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
+                          <span className="text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
                             {typeof oppCount === "number"
                               ? `${oppCount}/${MAX_OPP_SEATS} Allotted`
                               : "Available"}
@@ -543,14 +516,33 @@ function CustomDropdown({
                     </div>
                   );
 
-                  if (govCapped && !oppCapped) {
-                    return (
-                      <>
-                        {oppSection}
-                        {govSection}
-                      </>
-                    );
-                  }
+                  const govSection = filteredGov.length > 0 && (
+                    <div>
+                      <div className="sticky top-0 bg-[#1c1c1e]/95 backdrop-blur z-10 px-2.5 py-1.5 mb-1 flex items-center justify-between border-b border-orange-500/20 rounded">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
+                          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-orange-300">
+                            Government Side ({GOVERNMENT_MEMBERS.length})
+                          </span>
+                        </div>
+                        {govCapped ? (
+                          <span className="text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
+                            {MAX_GOV_SEATS}/{MAX_GOV_SEATS} Allotted
+                          </span>
+                        ) : (
+                          <span className="text-orange-300/80 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-semibold">
+                            {typeof govCount === "number"
+                              ? `${govCount}/${MAX_GOV_SEATS} Allotted`
+                              : "Available"}
+                          </span>
+                        )}
+                      </div>
+                      <ul className="space-y-1">
+                        {filteredGov.map((opt) => renderOption(opt, govCapped))}
+                      </ul>
+                    </div>
+                  );
+
                   if (oppCapped && !govCapped) {
                     return (
                       <>
@@ -559,10 +551,18 @@ function CustomDropdown({
                       </>
                     );
                   }
+                  if (govCapped && !oppCapped) {
+                    return (
+                      <>
+                        {oppSection}
+                        {govSection}
+                      </>
+                    );
+                  }
                   return (
                     <>
-                      {govSection}
                       {oppSection}
+                      {govSection}
                     </>
                   );
                 })()}
@@ -718,7 +718,7 @@ export default function YpmClient() {
   const refreshAllottedPortfolios = async () => {
     setIsLoadingPortfolios(true);
     try {
-      const res = await fetch("/api/register");
+      const res = await fetch("/api/register", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const rawList: string[] = Array.isArray(data.allottedPortfolios)
@@ -1506,27 +1506,6 @@ export default function YpmClient() {
                                 0,
                               );
 
-                              // Distribute totalGov across rows proportionally (Largest Remainder method)
-                              const govPerRaw = radii.map(
-                                (r) => (r / totalRadius) * totalGov,
-                              );
-                              const govPerRow = govPerRaw.map((v) =>
-                                Math.floor(v),
-                              );
-                              let govRemainder =
-                                totalGov - govPerRow.reduce((a, b) => a + b, 0);
-                              const govDecimals = govPerRaw
-                                .map((v, i) => ({
-                                  val: v - Math.floor(v),
-                                  index: i,
-                                }))
-                                .sort((a, b) => b.val - a.val);
-                              for (let i = 0; i < govRemainder; i++) {
-                                govPerRow[
-                                  govDecimals[i % govDecimals.length].index
-                                ]++;
-                              }
-
                               // Distribute totalOpp across rows proportionally (Largest Remainder method)
                               const oppPerRaw = radii.map(
                                 (r) => (r / totalRadius) * totalOpp,
@@ -1548,10 +1527,31 @@ export default function YpmClient() {
                                 ]++;
                               }
 
+                              // Distribute totalGov across rows proportionally (Largest Remainder method)
+                              const govPerRaw = radii.map(
+                                (r) => (r / totalRadius) * totalGov,
+                              );
+                              const govPerRow = govPerRaw.map((v) =>
+                                Math.floor(v),
+                              );
+                              let govRemainder =
+                                totalGov - govPerRow.reduce((a, b) => a + b, 0);
+                              const govDecimals = govPerRaw
+                                .map((v, i) => ({
+                                  val: v - Math.floor(v),
+                                  index: i,
+                                }))
+                                .sort((a, b) => b.val - a.val);
+                              for (let i = 0; i < govRemainder; i++) {
+                                govPerRow[
+                                  govDecimals[i % govDecimals.length].index
+                                ]++;
+                              }
+
                               // Dynamically calculate dot radius based on maximum seats in any single row
                               const maxSeatsInAnyRow = Math.max(
                                 ...radii.map(
-                                  (_, i) => govPerRow[i] + oppPerRow[i],
+                                  (_, i) => oppPerRow[i] + govPerRow[i],
                                 ),
                                 1,
                               );
@@ -1560,13 +1560,13 @@ export default function YpmClient() {
                                 Math.min(7, 190 / (maxSeatsInAnyRow * 1.6)),
                               );
 
-                              const govSeats: {
+                              const oppSeats: {
                                 x: number;
                                 y: number;
                                 angle: number;
                                 radius: number;
                               }[] = [];
-                              const oppSeats: {
+                              const govSeats: {
                                 x: number;
                                 y: number;
                                 angle: number;
@@ -1574,10 +1574,10 @@ export default function YpmClient() {
                               }[] = [];
 
                               for (let r = 0; r < numRows; r++) {
-                                const govCountInRow = govPerRow[r];
                                 const oppCountInRow = oppPerRow[r];
+                                const govCountInRow = govPerRow[r];
                                 const seatsInRow =
-                                  govCountInRow + oppCountInRow;
+                                  oppCountInRow + govCountInRow;
                                 const radius = radii[r];
 
                                 if (seatsInRow <= 0) continue;
@@ -1595,30 +1595,30 @@ export default function YpmClient() {
                                   const x = centerX + radius * Math.cos(angle);
                                   const y = centerY - radius * Math.sin(angle);
 
-                                  const isGov = i < govCountInRow;
-                                  if (isGov) {
-                                    govSeats.push({ x, y, angle, radius });
-                                  } else {
+                                  const isOpp = i < oppCountInRow;
+                                  if (isOpp) {
                                     oppSeats.push({ x, y, angle, radius });
+                                  } else {
+                                    govSeats.push({ x, y, angle, radius });
                                   }
                                 }
                               }
 
                               // Center divider is at angle = Math.PI / 2 (90 degrees).
-                              // Sort seats by distance from the center aisle so seats flanking the aisle fill first,
-                              // and vacant seats naturally remain at the outer ends/wings!
-                              govSeats.sort(
-                                (a, b) =>
-                                  Math.abs(a.angle - Math.PI / 2) * 1000 +
-                                  a.radius -
-                                  (Math.abs(b.angle - Math.PI / 2) * 1000 +
-                                    b.radius),
-                              );
+                              // Sort seats by distance from the center aisle in descending order,
+                              // so outer wings fill first, and vacant/available (gray) seats remain in the middle!
                               oppSeats.sort(
                                 (a, b) =>
-                                  Math.abs(a.angle - Math.PI / 2) * 1000 +
+                                  Math.abs(b.angle - Math.PI / 2) * 1000 +
                                   a.radius -
-                                  (Math.abs(b.angle - Math.PI / 2) * 1000 +
+                                  (Math.abs(a.angle - Math.PI / 2) * 1000 +
+                                    b.radius),
+                              );
+                              govSeats.sort(
+                                (a, b) =>
+                                  Math.abs(b.angle - Math.PI / 2) * 1000 +
+                                  a.radius -
+                                  (Math.abs(a.angle - Math.PI / 2) * 1000 +
                                     b.radius),
                               );
 
@@ -1628,17 +1628,17 @@ export default function YpmClient() {
                                 side: "gov" | "opp";
                                 filled: boolean;
                               }[] = [
-                                ...govSeats.map((s, idx) => ({
-                                  x: s.x,
-                                  y: s.y,
-                                  side: "gov" as const,
-                                  filled: idx < govCount,
-                                })),
                                 ...oppSeats.map((s, idx) => ({
                                   x: s.x,
                                   y: s.y,
                                   side: "opp" as const,
                                   filled: idx < oppCount,
+                                })),
+                                ...govSeats.map((s, idx) => ({
+                                  x: s.x,
+                                  y: s.y,
+                                  side: "gov" as const,
+                                  filled: idx < govCount,
                                 })),
                               ];
 
@@ -1704,7 +1704,7 @@ export default function YpmClient() {
                                     strokeDasharray="4 4"
                                   />
 
-                                  {/* Render seats: clean neutral gray when vacant; solid electric blue or orange when allotted */}
+                                  {/* Render seats: clean neutral gray when vacant; solid orange for govt or blue for opp when allotted */}
                                   {allSeats.map((dot, i) => {
                                     const isGov = dot.side === "gov";
                                     const cx = Number(dot.x.toFixed(2));
@@ -1733,7 +1733,7 @@ export default function YpmClient() {
                                         cx={cx}
                                         cy={cy}
                                         r={dotRadius}
-                                        fill={isGov ? "#38bdf8" : "#f97316"}
+                                        fill={isGov ? "#f97316" : "#38bdf8"}
                                         aria-label={`${isGov ? "Government" : "Opposition"}: Allotted`}
                                         title={`${isGov ? "Government" : "Opposition"}: Allotted`}
                                         className="cursor-pointer transition-colors duration-150"
@@ -1741,7 +1741,7 @@ export default function YpmClient() {
                                     );
                                   })}
 
-                                  {/* Side labels with color indicators */}
+                                  {/* Side labels with color indicators: Opposition to Left of Speaker (Blue), Government to Right of Speaker (Orange) */}
                                   <g transform="translate(80, 248)">
                                     <text
                                       textAnchor="middle"
@@ -1751,7 +1751,7 @@ export default function YpmClient() {
                                       letterSpacing="0.12em"
                                       fontFamily="inherit"
                                     >
-                                      GOVERNMENT
+                                      OPPOSITION
                                     </text>
                                   </g>
                                   <g transform="translate(360, 248)">
@@ -1763,7 +1763,7 @@ export default function YpmClient() {
                                       letterSpacing="0.12em"
                                       fontFamily="inherit"
                                     >
-                                      OPPOSITION
+                                      GOVERNMENT
                                     </text>
                                   </g>
                                 </>
@@ -1772,44 +1772,44 @@ export default function YpmClient() {
                           </svg>
                         </div>
 
-                        {/* Legend & Stats below hemicycle */}
+                        {/* Legend & Stats below hemicycle: Opposition (Blue) on Left, Government (Orange) on Right */}
                         <div className="mt-4 pt-3 border-t border-white/5">
-                          <div className="grid grid-cols-2 gap-3">
-                            {/* Government stats */}
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-[#38bdf8]" />
+                          <div className="flex items-center justify-between gap-4">
+                            {/* Opposition stats */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-full bg-[#38bdf8] shrink-0" />
                                 <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-blue-400">
-                                  Govt
+                                  Opp
                                 </span>
                               </div>
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                                  isGovCapped
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${
+                                  isOppCapped
                                     ? "bg-red-500/20 text-red-400 border border-red-500/30"
                                     : "bg-blue-500/15 text-blue-300 border border-blue-500/25"
                                 }`}
                               >
-                                {govCount}/{MAX_GOV_SEATS}
+                                {oppCount}/{MAX_OPP_SEATS}
                               </span>
                             </div>
 
-                            {/* Opposition stats */}
-                            <div className="flex items-center justify-end gap-3">
+                            {/* Government stats */}
+                            <div className="flex items-center justify-end gap-2">
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                                  isOppCapped
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${
+                                  isGovCapped
                                     ? "bg-red-500/20 text-red-400 border border-red-500/30"
                                     : "bg-orange-500/15 text-orange-300 border border-orange-500/25"
                                 }`}
                               >
-                                {oppCount}/{MAX_OPP_SEATS}
+                                {govCount}/{MAX_GOV_SEATS}
                               </span>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
                                 <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-orange-400">
-                                  Opp
+                                  Govt
                                 </span>
-                                <span className="w-3 h-3 rounded-full bg-[#f97316]" />
+                                <span className="w-3 h-3 rounded-full bg-[#f97316] shrink-0" />
                               </div>
                             </div>
                           </div>
