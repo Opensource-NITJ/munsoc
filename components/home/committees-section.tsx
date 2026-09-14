@@ -11,7 +11,7 @@ const committees = [
     organizer: "MUNSoC NITJ",
     desc: "This conference agenda focuses on modernizing India's educational ecosystem, shifting from rote learning to competency-based evaluation.",
     href: "/committees/ypm",
-    date: "10 October 2026",
+    date: "18 October 2026",
     mode: "NIT Jalandhar",
     agenda:
       "Discussions on comprehensive reforms to the Indian examination system.",

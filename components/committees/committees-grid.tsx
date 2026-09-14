@@ -44,7 +44,7 @@ export default function CommitteesGrid() {
                     <span>&bull;</span>
                     <span className="flex items-center gap-1 text-white/80">
                       <Calendar size={13} className="text-[#38bdf8]" />
-                      10 October 2026
+                      18 October 2026
                     </span>
                   </div>
                 </div>

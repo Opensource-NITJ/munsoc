@@ -38,7 +38,7 @@ export default function YpmPage() {
         </div>
         <Reveal className="relative z-10 max-w-3xl mx-auto text-center">
           <div className="inline-block border border-[#38bdf8]/30 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1 rounded-sm mb-5 uppercase">
-            PARLIAMENTARY COMMITTEE &bull; 10 OCTOBER 2026
+            PARLIAMENTARY COMMITTEE &bull; 18 OCTOBER 2026
           </div>
           <h1
             className="font-poster text-white uppercase leading-[0.85] text-center"
