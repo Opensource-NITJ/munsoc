@@ -1041,7 +1041,7 @@ export default function YpmClient() {
                       Event Date
                     </span>
                     <span className="text-white text-sm font-semibold">
-                      10 October 2026
+                      18 October 2026
                     </span>
                   </div>
                 </div>
