@@ -30,9 +30,6 @@ export const TOTAL_SEATS = MAX_GOV_SEATS + MAX_OPP_SEATS;
 
 // Categorized Portfolios for Youth Parliament (YPM)
 export const GOVERNMENT_MEMBERS = [
-  "Yogi Adityanath (Chief Minister, Uttar Pradesh)",
-  "Devendra Fadnavis (Chief Minister, Maharashtra)",
-  "Himanta Biswa Sarma (Chief Minister, Assam)",
   "Smriti Irani (Former Union Minister)",
   "Nishikant Dubey (MP, Godda)",
   "Baijayant Panda (MP, Kendrapara)",
