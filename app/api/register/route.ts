@@ -387,14 +387,22 @@ export async function POST(req: NextRequest) {
           : Array.isArray(checkResult.allottedPortfolios)
             ? checkResult.allottedPortfolios
             : [];
-        const allottedCount = allottedList.length;
+        const actualAllotted = Array.isArray(checkResult.actualAllotted)
+          ? checkResult.actualAllotted
+          : allottedList;
+        const totalCount =
+          typeof checkResult.govCount === "number" &&
+          typeof checkResult.oppCount === "number"
+            ? checkResult.govCount + checkResult.oppCount
+            : actualAllotted.length;
+        const sideLimit =
+          typeof checkResult.sideLimit === "number"
+            ? checkResult.sideLimit
+            : 26;
 
         if (
-          checkResult.isClosed === true ||
-          checkResult.closed === true ||
-          (checkResult.result === "success" &&
-            portfolioLimit > 0 &&
-            allottedCount >= portfolioLimit)
+          (checkResult.isClosed === true && totalCount >= sideLimit * 2) ||
+          (portfolioLimit > 0 && totalCount >= portfolioLimit)
         ) {
           return NextResponse.json(
             {
