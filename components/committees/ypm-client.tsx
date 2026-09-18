@@ -17,6 +17,7 @@ import {
   Trash2,
   Calendar,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import QRCode from "qrcode";
@@ -24,8 +25,8 @@ import QRCode from "qrcode";
 // CONFIGURATION: Payment URI
 const UPI_ID = "manroopprsnl@oksbi";
 
-export const MAX_GOV_SEATS = 25;
-export const MAX_OPP_SEATS = 25;
+export const MAX_GOV_SEATS = 26;
+export const MAX_OPP_SEATS = 26;
 export const TOTAL_SEATS = MAX_GOV_SEATS + MAX_OPP_SEATS;
 
 // Categorized Portfolios for Youth Parliament (YPM)
@@ -590,6 +591,14 @@ export default function YpmClient() {
   });
 
   const [allottedPortfolios, setAllottedPortfolios] = useState<string[]>([]);
+  const [actualAllottedList, setActualAllottedList] = useState<string[]>([]);
+  const [previewClosed, setPreviewClosed] = useState<boolean>(false);
+  const [activeClosedSeat, setActiveClosedSeat] = useState<{
+    x: number;
+    y: number;
+    side: "gov" | "opp";
+    mpName: string;
+  } | null>(null);
   const [govCount, setGovCount] = useState<number>(0);
   const [oppCount, setOppCount] = useState<number>(0);
   const [isGovCapped, setIsGovCapped] = useState<boolean>(false);
@@ -746,16 +755,28 @@ export default function YpmClient() {
         const oppFilled =
           typeof data.oppCount === "number" ? data.oppCount : countOpp;
 
-        const govCapReached =
-          Boolean(data.isGovCapped) || govFilled >= MAX_GOV_SEATS;
-        const oppCapReached =
-          Boolean(data.isOppCapped) || oppFilled >= MAX_OPP_SEATS;
+        const currentGovLimit = MAX_GOV_SEATS;
+        const currentOppLimit = MAX_OPP_SEATS;
+
+        const govCapReached = govFilled >= currentGovLimit;
+        const oppCapReached = oppFilled >= currentOppLimit;
+        const totalReached = govFilled + oppFilled >= TOTAL_SEATS;
+
+        const registrationsClosed =
+          (govCapReached && oppCapReached) ||
+          totalReached ||
+          Boolean(
+            data.isClosed &&
+            govFilled >= currentGovLimit &&
+            oppFilled >= currentOppLimit,
+          );
 
         setGovCount(govFilled);
         setOppCount(oppFilled);
         setIsGovCapped(govCapReached);
         setIsOppCapped(oppCapReached);
-        setIsClosed(Boolean(data.isClosed) || (govCapReached && oppCapReached));
+        setIsClosed(registrationsClosed);
+        setActualAllottedList(actualAllotted);
 
         // When one side reaches its seat limit, all MPs on that side get marked Allotted!
         const effectiveList = new Set<string>(rawList);
@@ -781,6 +802,12 @@ export default function YpmClient() {
 
   useEffect(() => {
     refreshAllottedPortfolios();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("closed") === "true" || params.get("full") === "true") {
+        setPreviewClosed(true);
+      }
+    }
   }, []);
 
   const handleChange = (
@@ -955,6 +982,16 @@ export default function YpmClient() {
 
   const currentActiveStep = isPaymentVerified ? 3 : isPaymentModalOpen ? 2 : 1;
 
+  const isRegistrationsFull =
+    previewClosed ||
+    (!isLoadingPortfolios &&
+      Boolean(
+        isClosed ||
+        (isGovCapped && isOppCapped) ||
+        (govCount >= MAX_GOV_SEATS && oppCount >= MAX_OPP_SEATS) ||
+        govCount + oppCount >= TOTAL_SEATS,
+      ));
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       {/* Fullscreen Blur Loading Overlay during Submission */}
@@ -1095,7 +1132,19 @@ export default function YpmClient() {
 
       {/* Application Form & Pay Section */}
       <div id="apply-now" className="scroll-mt-24">
-        {!submitted && (
+        {isRegistrationsFull ? (
+          <Reveal className="text-center mb-10">
+            <h2 className="font-display text-white text-6xl sm:text-7xl md:text-8xl tracking-wider uppercase leading-none select-none">
+              AND..
+            </h2>
+            <div className="font-display text-[#38bdf8] text-3xl sm:text-5xl md:text-6xl tracking-wide uppercase mt-2 sm:mt-3 leading-tight select-none">
+              WE ARE CLOSED.
+            </div>
+            <p className="text-white/70 text-xs sm:text-sm font-heading font-medium tracking-widest uppercase mt-3">
+              {TOTAL_SEATS} registrations are full.
+            </p>
+          </Reveal>
+        ) : !submitted ? (
           <Reveal className="text-center mb-8">
             <div className="inline-block border border-[#38bdf8]/30 text-[#38bdf8] text-[10px] font-heading tracking-[0.2em] px-3 py-1 rounded-sm mb-4 uppercase">
               REGISTRATION &amp; PAYMENT PORTAL
@@ -1107,80 +1156,84 @@ export default function YpmClient() {
               APPLY FOR YOUTH PARLIAMENT
             </h2>
           </Reveal>
-        )}
+        ) : null}
 
-        {/* Step Progress Tracker */}
-        <div className="max-w-2xl mx-auto mb-10">
-          <div className="bg-[#1c1c1e] border border-white/5 rounded-2xl p-2 sm:p-2.5 shadow-2xl shadow-black/40">
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-              {[
-                { step: 1, title: "Details", desc: "Delegate info" },
-                { step: 2, title: "Payment", desc: "₹300 Fee" },
-                { step: 3, title: "Submitted", desc: "Confirmation" },
-              ].map((item) => {
-                const isCompleted = submitted || currentActiveStep > item.step;
-                const isActive = !submitted && currentActiveStep === item.step;
+        {/* Step Progress Tracker (only shown when form is active and open) */}
+        {!submitted && !isRegistrationsFull && (
+          <div className="max-w-2xl mx-auto mb-10">
+            <div className="bg-[#1c1c1e] border border-white/5 rounded-2xl p-2 sm:p-2.5 shadow-2xl shadow-black/40">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                {[
+                  { step: 1, title: "Details", desc: "Delegate info" },
+                  { step: 2, title: "Payment", desc: "₹300 Fee" },
+                  { step: 3, title: "Submitted", desc: "Confirmation" },
+                ].map((item) => {
+                  const isCompleted =
+                    submitted || currentActiveStep > item.step;
+                  const isActive =
+                    !submitted && currentActiveStep === item.step;
 
-                return (
-                  <div
-                    key={item.step}
-                    className={`flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-300 relative overflow-hidden ${
-                      isActive
-                        ? "bg-[#38bdf8]/10 border border-[#38bdf8]/30 shadow-md shadow-[#38bdf8]/10"
-                        : isCompleted
-                          ? "bg-emerald-500/5 border border-emerald-500/20"
-                          : "bg-[#121212]/50 border border-white/5 opacity-40"
-                    }`}
-                  >
+                  return (
                     <div
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-heading text-xs font-bold shrink-0 transition-colors ${
-                        isCompleted
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : isActive
-                            ? "bg-[#38bdf8] text-[#0a0a0a] shadow-md shadow-[#38bdf8]/25"
-                            : "bg-white/5 text-white/40 border border-white/10"
+                      key={item.step}
+                      className={`flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-300 relative overflow-hidden ${
+                        isActive
+                          ? "bg-[#38bdf8]/10 border border-[#38bdf8]/30 shadow-md shadow-[#38bdf8]/10"
+                          : isCompleted
+                            ? "bg-emerald-500/5 border border-emerald-500/20"
+                            : "bg-[#121212]/50 border border-white/5 opacity-40"
                       }`}
                     >
-                      {isCompleted ? (
-                        <Check size={14} strokeWidth={3} />
-                      ) : (
-                        `0${item.step}`
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span
-                        className={`text-xs sm:text-sm font-heading tracking-wide uppercase font-bold truncate block ${
-                          isActive
-                            ? "text-white"
-                            : isCompleted
-                              ? "text-emerald-300"
-                              : "text-white/60"
+                      <div
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-heading text-xs font-bold shrink-0 transition-colors ${
+                          isCompleted
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : isActive
+                              ? "bg-[#38bdf8] text-[#0a0a0a] shadow-md shadow-[#38bdf8]/25"
+                              : "bg-white/5 text-white/40 border border-white/10"
                         }`}
                       >
-                        {item.title}
-                      </span>
-                      <span
-                        className={`text-[9px] sm:text-[10px] font-heading tracking-wider uppercase block truncate mt-0.5 ${
-                          isActive
-                            ? "text-[#38bdf8]"
-                            : isCompleted
-                              ? "text-emerald-400/80"
-                              : "text-white/30"
-                        }`}
-                      >
-                        {isCompleted
-                          ? "Completed"
-                          : isActive
-                            ? "In Progress"
-                            : item.desc}
-                      </span>
+                        {isCompleted ? (
+                          <Check size={14} strokeWidth={3} />
+                        ) : (
+                          `0${item.step}`
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span
+                          className={`text-xs sm:text-sm font-heading tracking-wide uppercase font-bold truncate block ${
+                            isActive
+                              ? "text-white"
+                              : isCompleted
+                                ? "text-emerald-300"
+                                : "text-white/60"
+                          }`}
+                        >
+                          {item.title}
+                        </span>
+                        <span
+                          className={`text-[9px] sm:text-[10px] font-heading tracking-wider uppercase block truncate mt-0.5 ${
+                            isActive
+                              ? "text-[#38bdf8]"
+                              : isCompleted
+                                ? "text-emerald-400/80"
+                                : "text-white/30"
+                          }`}
+                        >
+                          {isCompleted
+                            ? "Completed"
+                            : isActive
+                              ? "In Progress"
+                              : item.desc}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <AnimatePresence mode="wait">
           {isRateLimitedClient ? (
@@ -1302,37 +1355,468 @@ export default function YpmClient() {
                 </a>
               </div>
             </motion.div>
-          ) : !isLoadingPortfolios &&
-            (isClosed ||
-              (isGovCapped && isOppCapped) ||
-              (govCount >= MAX_GOV_SEATS && oppCount >= MAX_OPP_SEATS) ||
-              allottedPortfolios.length >= memberList.length) ? (
+          ) : isRegistrationsFull ? (
             <motion.div
               key="registrations-closed"
-              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              initial={{ scale: 0.98, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              exit={{ scale: 0.98, opacity: 0, y: 15 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="max-w-xl mx-auto bg-[#1c1c1e] border border-[#38bdf8]/20 rounded-2xl p-8 text-center shadow-lg shadow-[#38bdf8]/5 mt-6"
+              className="max-w-2xl mx-auto bg-[#1c1c1e] border border-white/5 rounded-2xl p-4 sm:p-6 text-center shadow-2xl"
+              onClick={() => setActiveClosedSeat(null)}
             >
-              <div className="w-16 h-16 bg-[#38bdf8]/10 rounded-full flex items-center justify-center mx-auto mb-6 text-[#38bdf8]">
-                <Lock size={30} />
-              </div>
-              <h3 className="font-heading font-bold text-white text-xl mb-3 uppercase tracking-wide">
-                Registrations Closed
-              </h3>
-              <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                Thank you for your interest! All delegate portfolios for the{" "}
-                <span
-                  className="font-poster"
-                  style={{ letterSpacing: "0.05em" }}
+              {/* Parliament Hemicycle Chart - 100% same geometry, all 50 seats filled, with custom hover/tap popover */}
+              <div className="bg-[#121212] border border-white/5 rounded-xl p-4 sm:p-5 mb-6 relative select-none">
+                <div
+                  className="relative w-full max-w-[460px] mx-auto aspect-[440/260]"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setActiveClosedSeat(null);
+                    }
+                  }}
                 >
-                  YOUTH PARLIAMENT (YPM)
-                </span>{" "}
-                have been allotted (both Government and Opposition sides have
-                reached maximum capacity), and registrations are now officially
-                closed.
-              </p>
+                  <svg
+                    viewBox="0 0 440 260"
+                    className="w-full h-full block overflow-visible"
+                    xmlns="http://www.w3.org/2000/svg"
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).tagName === "svg") {
+                        setActiveClosedSeat(null);
+                      }
+                    }}
+                  >
+                    <defs>
+                      <radialGradient
+                        id="closed-podium-grad"
+                        cx="50%"
+                        cy="50%"
+                        r="50%"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="white"
+                          stopOpacity="0.06"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="white"
+                          stopOpacity="0.01"
+                        />
+                      </radialGradient>
+                    </defs>
+
+                    {(() => {
+                      const centerX = 220;
+                      const centerY = 230;
+                      const totalGov = MAX_GOV_SEATS;
+                      const totalOpp = MAX_OPP_SEATS;
+                      const totalSeats = TOTAL_SEATS;
+
+                      if (totalSeats <= 0) return null;
+
+                      const numRows =
+                        totalSeats >= 70
+                          ? 6
+                          : totalSeats >= 40
+                            ? 5
+                            : totalSeats >= 20
+                              ? 4
+                              : 3;
+                      const minRadius = 65;
+                      const maxRadius = 185;
+
+                      const radii: number[] = [];
+                      for (let r = 0; r < numRows; r++) {
+                        radii.push(
+                          minRadius +
+                            (r * (maxRadius - minRadius)) / (numRows - 1),
+                        );
+                      }
+
+                      const totalRadius = radii.reduce((sum, r) => sum + r, 0);
+
+                      const oppPerRaw = radii.map(
+                        (r) => (r / totalRadius) * totalOpp,
+                      );
+                      const oppPerRow = oppPerRaw.map((v) => Math.floor(v));
+                      let oppRemainder =
+                        totalOpp - oppPerRow.reduce((a, b) => a + b, 0);
+                      const oppDecimals = oppPerRaw
+                        .map((v, i) => ({
+                          val: v - Math.floor(v),
+                          index: i,
+                        }))
+                        .sort((a, b) => b.val - a.val);
+                      for (let i = 0; i < oppRemainder; i++) {
+                        oppPerRow[oppDecimals[i % oppDecimals.length].index]++;
+                      }
+
+                      const govPerRaw = radii.map(
+                        (r) => (r / totalRadius) * totalGov,
+                      );
+                      const govPerRow = govPerRaw.map((v) => Math.floor(v));
+                      let govRemainder =
+                        totalGov - govPerRow.reduce((a, b) => a + b, 0);
+                      const govDecimals = govPerRaw
+                        .map((v, i) => ({
+                          val: v - Math.floor(v),
+                          index: i,
+                        }))
+                        .sort((a, b) => b.val - a.val);
+                      for (let i = 0; i < govRemainder; i++) {
+                        govPerRow[govDecimals[i % govDecimals.length].index]++;
+                      }
+
+                      const maxSeatsInAnyRow = Math.max(
+                        ...radii.map((_, i) => oppPerRow[i] + govPerRow[i]),
+                        1,
+                      );
+                      const dotRadius = Math.max(
+                        4.5,
+                        Math.min(7, 190 / (maxSeatsInAnyRow * 1.6)),
+                      );
+
+                      const oppSeats: {
+                        x: number;
+                        y: number;
+                        angle: number;
+                        radius: number;
+                      }[] = [];
+                      const govSeats: {
+                        x: number;
+                        y: number;
+                        angle: number;
+                        radius: number;
+                      }[] = [];
+
+                      for (let r = 0; r < numRows; r++) {
+                        const oppCountInRow = oppPerRow[r];
+                        const govCountInRow = govPerRow[r];
+                        const seatsInRow = oppCountInRow + govCountInRow;
+                        const radius = radii[r];
+
+                        if (seatsInRow <= 0) continue;
+
+                        const angleStart = Math.PI * 0.95;
+                        const angleEnd = Math.PI * 0.05;
+                        const angleRange = angleStart - angleEnd;
+
+                        for (let i = 0; i < seatsInRow; i++) {
+                          const angle =
+                            seatsInRow === 1
+                              ? Math.PI / 2
+                              : angleStart -
+                                (i / (seatsInRow - 1)) * angleRange;
+                          const x = centerX + radius * Math.cos(angle);
+                          const y = centerY - radius * Math.sin(angle);
+
+                          const isOpp = i < oppCountInRow;
+                          if (isOpp) {
+                            oppSeats.push({ x, y, angle, radius });
+                          } else {
+                            govSeats.push({ x, y, angle, radius });
+                          }
+                        }
+                      }
+
+                      // Sort identical to original: outer wings fill first, center aisle last
+                      oppSeats.sort(
+                        (a, b) =>
+                          Math.abs(b.angle - Math.PI / 2) * 1000 +
+                          a.radius -
+                          (Math.abs(a.angle - Math.PI / 2) * 1000 + b.radius),
+                      );
+                      govSeats.sort(
+                        (a, b) =>
+                          Math.abs(b.angle - Math.PI / 2) * 1000 +
+                          a.radius -
+                          (Math.abs(a.angle - Math.PI / 2) * 1000 + b.radius),
+                      );
+
+                      const actualOppAllotted = actualAllottedList.filter((p) =>
+                        OPPOSITION_MEMBERS.some(
+                          (m) =>
+                            m.trim().toLowerCase() === p.trim().toLowerCase(),
+                        ),
+                      );
+                      const remainingOpp = OPPOSITION_MEMBERS.filter(
+                        (m) =>
+                          !actualOppAllotted.some(
+                            (p) =>
+                              p.trim().toLowerCase() === m.trim().toLowerCase(),
+                          ),
+                      );
+                      const oppMpList = [...actualOppAllotted, ...remainingOpp];
+
+                      const actualGovAllotted = actualAllottedList.filter((p) =>
+                        GOVERNMENT_MEMBERS.some(
+                          (m) =>
+                            m.trim().toLowerCase() === p.trim().toLowerCase(),
+                        ),
+                      );
+                      const remainingGov = GOVERNMENT_MEMBERS.filter(
+                        (m) =>
+                          !actualGovAllotted.some(
+                            (p) =>
+                              p.trim().toLowerCase() === m.trim().toLowerCase(),
+                          ),
+                      );
+                      const govMpList = [...actualGovAllotted, ...remainingGov];
+
+                      const allSeats: {
+                        x: number;
+                        y: number;
+                        side: "gov" | "opp";
+                        mpName: string;
+                      }[] = [
+                        ...oppSeats.map((s, idx) => ({
+                          x: s.x,
+                          y: s.y,
+                          side: "opp" as const,
+                          mpName: oppMpList[idx] || `Opposition MP #${idx + 1}`,
+                        })),
+                        ...govSeats.map((s, idx) => ({
+                          x: s.x,
+                          y: s.y,
+                          side: "gov" as const,
+                          mpName: govMpList[idx] || `Government MP #${idx + 1}`,
+                        })),
+                      ];
+
+                      return (
+                        <>
+                          {radii.map((radius, idx) => {
+                            const startX =
+                              centerX + radius * Math.cos(Math.PI * 0.95);
+                            const startY =
+                              centerY - radius * Math.sin(Math.PI * 0.95);
+                            const endX =
+                              centerX + radius * Math.cos(Math.PI * 0.05);
+                            const endY =
+                              centerY - radius * Math.sin(Math.PI * 0.05);
+                            return (
+                              <path
+                                key={`closed-arc-guide-${idx}`}
+                                d={`M ${Number(startX.toFixed(2))} ${Number(startY.toFixed(2))} A ${radius} ${radius} 0 0 1 ${Number(endX.toFixed(2))} ${Number(endY.toFixed(2))}`}
+                                fill="none"
+                                stroke="white"
+                                strokeOpacity={0.05}
+                                strokeWidth={1}
+                              />
+                            );
+                          })}
+
+                          <path
+                            d={`M ${centerX - 28} ${centerY} A 28 28 0 0 1 ${centerX + 28} ${centerY}`}
+                            fill="url(#closed-podium-grad)"
+                            stroke="white"
+                            strokeOpacity={0.1}
+                            strokeWidth={1}
+                          />
+                          <text
+                            x={centerX}
+                            y={centerY - 10}
+                            textAnchor="middle"
+                            fill="white"
+                            fillOpacity={0.2}
+                            fontSize="6"
+                            fontWeight="700"
+                            letterSpacing="0.15em"
+                            fontFamily="inherit"
+                          >
+                            SPEAKER
+                          </text>
+
+                          <line
+                            x1={centerX}
+                            y1={centerY - 30}
+                            x2={centerX}
+                            y2={centerY - 195}
+                            stroke="white"
+                            strokeOpacity={0.1}
+                            strokeWidth={1.5}
+                            strokeDasharray="4 4"
+                          />
+
+                          {allSeats.map((dot, i) => {
+                            const isGov = dot.side === "gov";
+                            const isCurrentActive =
+                              activeClosedSeat?.mpName === dot.mpName;
+                            const cx = Number(dot.x.toFixed(2));
+                            const cy = Number(dot.y.toFixed(2));
+
+                            return (
+                              <circle
+                                key={`closed-seat-${i}`}
+                                cx={cx}
+                                cy={cy}
+                                r={
+                                  isCurrentActive ? dotRadius + 2.5 : dotRadius
+                                }
+                                fill={isGov ? "#f97316" : "#38bdf8"}
+                                stroke={isCurrentActive ? "#ffffff" : undefined}
+                                strokeWidth={isCurrentActive ? 2 : 0}
+                                aria-label={dot.mpName}
+                                onMouseEnter={() => setActiveClosedSeat(dot)}
+                                onMouseLeave={() => setActiveClosedSeat(null)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveClosedSeat((prev) =>
+                                    prev?.mpName === dot.mpName ? null : dot,
+                                  );
+                                }}
+                                className="cursor-pointer transition-all duration-150 hover:brightness-125"
+                              />
+                            );
+                          })}
+
+                          <g transform="translate(80, 248)">
+                            <text
+                              textAnchor="middle"
+                              fill="#38bdf8"
+                              fontSize="10"
+                              fontWeight="800"
+                              letterSpacing="0.12em"
+                              fontFamily="inherit"
+                            >
+                              OPPOSITION
+                            </text>
+                          </g>
+                          <g transform="translate(360, 248)">
+                            <text
+                              textAnchor="middle"
+                              fill="#f97316"
+                              fontSize="10"
+                              fontWeight="800"
+                              letterSpacing="0.12em"
+                              fontFamily="inherit"
+                            >
+                              GOVERNMENT
+                            </text>
+                          </g>
+                        </>
+                      );
+                    })()}
+                  </svg>
+
+                  {/* Custom Floating Popover Tooltip with dynamic edge clamping */}
+                  <AnimatePresence>
+                    {activeClosedSeat &&
+                      (() => {
+                        const isFarLeft = activeClosedSeat.x < 115;
+                        const isFarRight = activeClosedSeat.x > 325;
+                        const xAnchorPercent = (activeClosedSeat.x / 440) * 100;
+                        const yAnchorPercent = (activeClosedSeat.y / 260) * 100;
+
+                        const translationX = isFarLeft
+                          ? "-translate-x-[15%]"
+                          : isFarRight
+                            ? "-translate-x-[85%]"
+                            : "-translate-x-1/2";
+
+                        const arrowLeft = isFarLeft
+                          ? "15%"
+                          : isFarRight
+                            ? "85%"
+                            : "50%";
+
+                        return (
+                          <motion.div
+                            key={activeClosedSeat.mpName}
+                            initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.12, ease: "easeOut" }}
+                            style={{
+                              left: `${xAnchorPercent}%`,
+                              top: `${yAnchorPercent}%`,
+                            }}
+                            className={`absolute ${translationX} -translate-y-[calc(100%+10px)] pointer-events-none z-30 min-w-[160px] max-w-[220px] sm:max-w-[260px]`}
+                          >
+                            <div className="bg-[#18181b]/95 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 shadow-2xl shadow-black/80 text-left relative">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    activeClosedSeat.side === "gov"
+                                      ? "bg-[#f97316]"
+                                      : "bg-[#38bdf8]"
+                                  }`}
+                                />
+                                <span
+                                  className={`text-[9px] font-heading font-bold uppercase tracking-wider ${
+                                    activeClosedSeat.side === "gov"
+                                      ? "text-orange-400"
+                                      : "text-[#38bdf8]"
+                                  }`}
+                                >
+                                  {activeClosedSeat.side === "gov"
+                                    ? "Government"
+                                    : "Opposition"}
+                                </span>
+                              </div>
+                              <p className="text-white text-xs font-semibold leading-snug break-words">
+                                {activeClosedSeat.mpName}
+                              </p>
+                              <div
+                                style={{ left: arrowLeft }}
+                                className="absolute -bottom-1 -translate-x-1/2 w-2.5 h-2.5 bg-[#18181b] border-r border-b border-white/20 rotate-45"
+                              />
+                            </div>
+                          </motion.div>
+                        );
+                      })()}
+                  </AnimatePresence>
+                </div>
+
+                {/* Legend & Stats below hemicycle */}
+                <div className="mt-4 pt-3 border-t border-white/5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded-full bg-[#38bdf8] shrink-0" />
+                        <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-blue-400">
+                          Opp
+                        </span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-red-500/20 text-red-400 border border-red-500/30">
+                        {MAX_OPP_SEATS}/{MAX_OPP_SEATS}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-red-500/20 text-red-400 border border-red-500/30">
+                        {MAX_GOV_SEATS}/{MAX_GOV_SEATS}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-orange-400">
+                          Govt
+                        </span>
+                        <span className="w-3 h-3 rounded-full bg-[#f97316] shrink-0" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Community WhatsApp CTA for Future Events */}
+              <div className="pt-2 border-t border-white/5 text-center">
+                <p className="text-white/80 text-xs sm:text-sm font-heading font-semibold uppercase tracking-wider mb-1">
+                  Want to stay tuned for future MUN events?
+                </p>
+                <p className="text-white/50 text-[11px] sm:text-xs mb-4 max-w-md mx-auto leading-relaxed">
+                  Join the official MUNSoC Community WhatsApp group for
+                  announcements, debates, and future conference registrations.
+                </p>
+                <a
+                  href="https://chat.whatsapp.com/IFbG2gOm3gvHSB5Vi4sIr5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#38bdf8] text-[#0a0a0a] font-heading font-bold text-xs tracking-widest px-6 py-3 rounded-lg hover:bg-[#7dd3fc] transition-all inline-flex items-center gap-2 shadow-lg shadow-[#38bdf8]/20 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <MessageCircle size={15} />
+                  JOIN MUNSOC WHATSAPP COMMUNITY
+                </a>
+              </div>
             </motion.div>
           ) : (
             <motion.div
