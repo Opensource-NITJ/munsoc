@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import SeatsLeftLabel from "@/components/seats-left-label";
+import { TOTAL_SEATS, getAvailablePortfoliosCount } from "@/lib/portfolios";
 
 const AshokaChakra = () => (
   <svg
@@ -31,11 +33,29 @@ const AshokaChakra = () => (
 
 export default function HeroSection() {
   const [mounted, setMounted] = useState(false);
+  const [availablePortfolios, setAvailablePortfolios] = useState<number | null>(null);
   const reduceMotion = useReducedMotion();
   const reduce = mounted && Boolean(reduceMotion);
 
   useEffect(() => {
     setMounted(true);
+
+    let active = true;
+    fetch("/api/register")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active) return;
+        if (data) {
+          setAvailablePortfolios(getAvailablePortfoliosCount(data));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch available portfolios in hero:", err);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -86,7 +106,9 @@ export default function HeroSection() {
       <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl mx-auto pb-24 pt-4 mt-2 sm:mt-8">
         <Link
           href="/committees/ypm"
-          className={`inline-flex items-center gap-2 border border-[#38bdf8]/35 bg-[#38bdf8]/5 text-[#38bdf8] hover:border-[#38bdf8]/60 hover:bg-[#38bdf8]/10 text-[10px] font-heading tracking-[0.2em] px-4 py-1.5 rounded-full mb-12 transition-all duration-300 hover:scale-105 shadow-md shadow-[#38bdf8]/5 ${
+          className={`inline-flex items-center gap-2 border border-[#38bdf8]/35 bg-[#38bdf8]/5 text-[#38bdf8] hover:border-[#38bdf8]/60 hover:bg-[#38bdf8]/10 text-[10px] font-heading tracking-[0.2em] px-4 py-1.5 rounded-full ${
+            availablePortfolios !== null ? "mb-3.5" : "mb-12"
+          } transition-all duration-300 hover:scale-105 shadow-md shadow-[#38bdf8]/5 ${
             reduce ? "" : "animate-hero-fade-in-up"
           }`}
           style={
@@ -100,6 +122,24 @@ export default function HeroSection() {
           <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full animate-ping" />
           YOUTH PARLIAMENT: 18 OCTOBER 2026 &rarr;
         </Link>
+
+        {availablePortfolios !== null && (
+          <Link
+            href="/committees/ypm"
+            className={`inline-block transition-transform duration-300 hover:scale-105 ${
+              reduce ? "" : "animate-hero-fade-in-up"
+            }`}
+            style={
+              {
+                animationDelay: reduce ? undefined : "0.53s",
+                animationFillMode: reduce ? undefined : "both",
+                ["--target-opacity" as any]: 1,
+              } as React.CSSProperties
+            }
+          >
+            <SeatsLeftLabel seatsLeft={availablePortfolios} />
+          </Link>
+        )}
 
         <h1
           className="font-display text-white leading-[1.0] flex flex-col items-center text-center w-full"
